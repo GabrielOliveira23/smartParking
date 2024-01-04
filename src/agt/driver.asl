@@ -9,8 +9,6 @@
 
 /* Plans */
 
-// +tipoVaga(X) <- .print("Tipo da vaga escolhido: ", X).
-// +precoTabela(X) <- .print("Preco da vaga: R$", X).
 +vagaDisponivel(X)[source(self)] <- .print("Vaga disponivel: ", X).
 
 +!startNegotiation <- 
@@ -22,7 +20,7 @@
     ?precoTabela(Price);
     
     .print("Tipo da vaga: ", Tipo);
-    .print("Preco da vaga: R$", Price);
+    .print("Preco da vaga: ", Price);
 
     if (Choice == "COMPRA") {
         .send(manager, achieve, isVagaDisponivel(Tipo, Choice));
@@ -31,13 +29,12 @@
     }.
 
 +vagaDisponivel(X)[source(Manager)] : true <-
-    .print("oi");
     if (X == true) {
         ?decisao(Choice);
         if (Choice == "COMPRA") {
             ?idVaga(Id);
-            ?precoTabela(Price);
-            !compra(Price, Id);
+            !park;
+            !compra(Id);
         } else {
             .print("Escolha invalida");
         }
@@ -54,9 +51,12 @@
 	.wait(myWallet(MyPriv,MyPub));
     +driverWallet(MyPub).
 
-+!compra(Price, Id) : true <- 
++!compra(Id) : true <- 
     .print("Compra de vaga");
-    !pay(Price).
+    ?useTime(Minutes);
+    defineValueToPay(Id, Minutes);
+    ?valueToPay(Value);
+    !pay(Value).
     //enviar mensagem para o gerente para a verificacao de transferencia
 
 +!pay(Price) : not bankAccount(ok)[source(bank)] & not driverWallet(MyPub) <-
@@ -71,12 +71,17 @@
 +!pay(Price) : bankAccount(ok)[source(bank)] & cryptocurrency(Coin) 
 			& chainServer(Server) & myWallet(MyPriv,MyPub) 
 			& managerWallet(Manager) <-
+    ?useTime(Min);
+    .print("Tempo de uso (minutos): ", Min);
+
     .print("Pagando vaga.....");
+    
     ?tipoVaga(Vaga);
 	velluscinum.transferToken(Server,MyPriv,MyPub,Coin,Manager,Price,payment);
 	.wait(payment(IdTransfer));
     .print("Pagamento realizado");
-	.send(manager, achieve, vacancyPayment(IdTransfer)).
+	
+    .send(manager, achieve, vacancyPayment(IdTransfer)).
 
 +!requestLend : cryptocurrency(Coin) & bankWallet(BankW) 
             & chainServer(Server) 
@@ -95,13 +100,13 @@
 	.print("Lend Contract nr:",PP);
 	.send(bank,achieve,lending(PP,MyPub,100)).
 
-+!park[source(manager)] : true <-
++!park: true <-
     ?idVaga(Id);
     .print("Estacionando veiculo na vaga ", Id);
     .print("--------------------------------------------------------------");
-    .wait(10000);
-    !leave.
+    ?useTime(Min);
+    .wait(Min*10).
 
-+!leave : true <-
++!leave[source(manager)] : true <-
     .print("Saindo da vaga");
     .print("--------------------------------------------------------------").

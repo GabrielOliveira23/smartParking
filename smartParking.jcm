@@ -27,9 +27,9 @@ mas smartParking {
   agent bank
 
   workspace network {
-    artifact driverControl: env.DriverControl
-    artifact parkControl: env.ParkControl
-    artifact parkPricing: env.ParkPricing
+    artifact driverControl: DriverControl
+    artifact parkControl: ParkControl
+    artifact parkPricing: ParkPricing
   }
 
   uses package: velluscinum "com.github.chon-group:velluscinum-jcm:0.9-rc"

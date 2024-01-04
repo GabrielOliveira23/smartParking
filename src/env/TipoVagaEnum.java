@@ -1,5 +1,3 @@
-package env;
-
 public enum TipoVagaEnum {
     LONGA,
     CURTA,

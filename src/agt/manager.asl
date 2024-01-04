@@ -25,7 +25,7 @@
 	.print("Validating vacancy payment!");
 	velluscinum.stampTransaction(Server,MyPriv,MyPub,Transfer);
 	.print("Vacancy paid!");
-	.send(driver, achieve, park).
+	.send(driver, achieve, leave).
 
 +vagaDisponivel(X) <-
 	.send(driver, tell, vagaDisponivel(X)).

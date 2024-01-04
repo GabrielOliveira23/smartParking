@@ -1,5 +1,3 @@
-package env;
-
 import cartago.*;
 import java.util.List;
 import java.util.ArrayList;
@@ -8,7 +6,7 @@ import java.util.TimerTask;
 import java.util.Random;
 
 public class ParkControl extends Artifact {
-    List<Vaga> listaVagas = new ArrayList<Vaga>();
+    static List<Vaga> listaVagas = new ArrayList<Vaga>();
     Proposta proposta = new Proposta();
 
     void init() {
@@ -59,6 +57,15 @@ public class ParkControl extends Artifact {
         defineObsProperty("longasDisponiveis", longasDisponiveis);
         defineObsProperty("cobertasDisponiveis", cobertasDisponiveis);
         defineObsProperty("descobertasDisponiveis", descobertasDisponiveis);
+    }
+
+    static String consultarTipoVaga(int idVaga) {
+        for(Vaga vaga : listaVagas) {
+            if (vaga.getId() == idVaga) {
+                return vaga.getTipoVaga();
+            }
+        }
+        return null;
     }
 
     @OPERATION

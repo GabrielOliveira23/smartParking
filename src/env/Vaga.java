@@ -1,5 +1,3 @@
-package env;
-
 public class Vaga {
     private int id;
     private TipoVagaEnum tipoVaga;

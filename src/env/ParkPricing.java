@@ -1,12 +1,10 @@
-package env;
-
 import cartago.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
 public class ParkPricing extends Artifact { 
-    private Map<TipoVagaEnum, Double> precos;
+    private static Map<TipoVagaEnum, Double> precos;
     
     void init() {
         defineObsProperty("precoVaga", 0);
@@ -18,7 +16,7 @@ public class ParkPricing extends Artifact {
         precos.put(TipoVagaEnum.DESCOBERTA, 12.0);
     }
 
-    public Double getPreco(TipoVagaEnum tipoVaga) {
+    public static Double getPreco(TipoVagaEnum tipoVaga) {
         return precos.getOrDefault(tipoVaga, 0.0);
     }
 
@@ -30,6 +28,15 @@ public class ParkPricing extends Artifact {
 
             defineObsProperty("precoTabela", precoTabela);
         }
+    }
+
+    static double consultPrice(int idVaga) {
+        String tipo = ParkControl.consultarTipoVaga(idVaga);
+        if (tipo != null) {
+            TipoVagaEnum typeVaga = TipoVagaEnum.setTipoVaga(tipo);
+            return getPreco(typeVaga);
+        }
+        return 0.0;
     }
 
     

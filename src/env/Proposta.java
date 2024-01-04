@@ -1,5 +1,3 @@
-package env;
-
 public class Proposta {
     private int id;
     private Double precoProposta;
