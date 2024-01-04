@@ -19,12 +19,12 @@
 	consultarVaga(Vaga).
 	// se a intencao for reservar fazer a condicao para isso
 
-+!vacancyPayment(Transfer) : cryptocurrency(Coin)
-            & chainServer(Server) 
++!vacancyPayment(Transfer, IdVaga) : chainServer(Server) 
             & myWallet(MyPriv,MyPub) <-
-	.print("Validating vacancy payment!");
+	.print("Validating vacancy payment -> Id: ", IdVaga);
 	velluscinum.stampTransaction(Server,MyPriv,MyPub,Transfer);
 	.print("Vacancy paid!");
+	driverExiting(IdVaga);
 	.send(driver, achieve, leave).
 
 +vagaDisponivel(X) <-

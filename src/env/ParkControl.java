@@ -1,8 +1,6 @@
 import cartago.*;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.Random;
 
 public class ParkControl extends Artifact {
@@ -13,7 +11,7 @@ public class ParkControl extends Artifact {
         defineObsProperty("VagaDisponivel", false);
         
         Random random = new Random();
-        boolean isOcupada;
+
         int cobertasDisponiveis = 0;
         int curtasDisponiveis = 0;
         int longasDisponiveis = 0;
@@ -21,7 +19,7 @@ public class ParkControl extends Artifact {
         
         for (int i = 1; i < 7; i++) {
             listaVagas.add(new Vaga(i, TipoVagaEnum.CURTA));
-            if (isOcupada = random.nextBoolean()) {
+            if (random.nextBoolean()) {
                 listaVagas.get(i - 1).ocuparVaga();
             }
             else {
@@ -31,7 +29,7 @@ public class ParkControl extends Artifact {
         
         for (int i = 7; i < 10; i++) {
             listaVagas.add(new Vaga(i, TipoVagaEnum.LONGA));
-            if (isOcupada = random.nextBoolean()) {
+            if (random.nextBoolean()) {
                 listaVagas.get(i - 1).ocuparVaga();
             }else
                 longasDisponiveis++;
@@ -39,7 +37,7 @@ public class ParkControl extends Artifact {
         
         for (int i = 10; i < 14; i++) {
             listaVagas.add(new Vaga(i, TipoVagaEnum.COBERTA));
-            if (isOcupada = random.nextBoolean()) {
+            if (random.nextBoolean()) {
                 listaVagas.get(i - 1).ocuparVaga();
             } else
                 cobertasDisponiveis++;
@@ -47,7 +45,7 @@ public class ParkControl extends Artifact {
 
         for (int i = 14; i < 20; i++) {
             listaVagas.add(new Vaga(i, TipoVagaEnum.DESCOBERTA));
-            if (isOcupada = random.nextBoolean()) {
+            if (random.nextBoolean()) {
                 listaVagas.get(i - 1).ocuparVaga();
             } else
                 descobertasDisponiveis++;
@@ -74,6 +72,7 @@ public class ParkControl extends Artifact {
             if (vaga.getTipoVaga().equals(tipoVaga.toUpperCase()) && vaga.isDisponivel()) {
                 defineObsProperty("vagaDisponivel", true);
                 defineObsProperty("idVaga", vaga.getId());
+                System.out.println("Vaga consultada: " + vaga.getId() + " - " + vaga.getTipoVaga() + " - " + vaga.isDisponivel());
                 return;
             }
         }
@@ -85,6 +84,17 @@ public class ParkControl extends Artifact {
         for (Vaga vaga : listaVagas) {
             if ((vaga.getId() == idVaga) && vaga.isDisponivel()) {
                 vaga.ocuparVaga();
+                return;
+            }
+        }
+    }
+
+    @OPERATION
+    void driverExiting(int idVaga) {
+        for (Vaga vaga : listaVagas) {
+            if ((vaga.getId() == idVaga) && !vaga.isDisponivel()) {
+                vaga.liberarVaga();
+                System.out.println("Vaga liberada: " + vaga.getId());
                 return;
             }
         }

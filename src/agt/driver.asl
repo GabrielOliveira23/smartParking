@@ -73,6 +73,7 @@
 			& managerWallet(Manager) <-
     ?useTime(Min);
     .print("Tempo de uso (minutos): ", Min);
+    .print("Valor a pagar: ", Price);
 
     .print("Pagando vaga.....");
     
@@ -81,7 +82,8 @@
 	.wait(payment(IdTransfer));
     .print("Pagamento realizado");
 	
-    .send(manager, achieve, vacancyPayment(IdTransfer)).
+    ?idVaga(IdVaga);
+    .send(manager, achieve, vacancyPayment(IdTransfer, IdVaga)).
 
 +!requestLend : cryptocurrency(Coin) & bankWallet(BankW) 
             & chainServer(Server) 

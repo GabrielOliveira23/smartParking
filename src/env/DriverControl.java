@@ -11,6 +11,10 @@ public class DriverControl extends Artifact {
         int choice = random.nextInt(2);
         int useMinutes = random.nextInt(180);
 
+        if (useMinutes < 20) {
+            useMinutes = 20;
+        }
+
         defineObsProperty("decisao", "COMPRA");
         defineObsProperty("useTime", useMinutes);
         definirTipoVaga();
@@ -42,8 +46,10 @@ public class DriverControl extends Artifact {
 
     @OPERATION
     void defineValueToPay(int idVacancy, int minutes) {
-        double vacancyPrice = ParkPricing.consultPrice(idVacancy);
-        double valueToPay = vacancyPrice * (minutes / 60);
+        double vacancyPrice = (double) ParkPricing.consultPrice(idVacancy);
+        double valueToPay = vacancyPrice * ((double)minutes / 60);
+
+        valueToPay = Math.round(valueToPay);
 
         defineObsProperty("valueToPay", valueToPay);
     }
