@@ -1,12 +1,26 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class Vaga {
     private int id;
     private TipoVagaEnum tipoVaga;
     private boolean disponivel;
+    private List<String> reservas;
 
     public Vaga(int id, TipoVagaEnum tipoVaga) {
         this.id = id;
         this.tipoVaga = tipoVaga;
         this.disponivel = true;
+        reservas = new ArrayList<String>();
+    }
+
+    public void reservarVaga(String data, String hora) {
+        this.disponivel = false;
+        reservas.add(data + " - " + hora);
+    }
+
+    public List<String> getReservas() {
+        return reservas;
     }
 
     public int getId() {

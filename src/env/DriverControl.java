@@ -11,12 +11,11 @@ public class DriverControl extends Artifact {
         int choice = random.nextInt(2);
         int useMinutes = random.nextInt(180);
 
-        if (useMinutes < 20) {
-            useMinutes = 20;
-        }
+        useMinutes = useMinutes < 20 ? 20 : useMinutes;
 
-        defineObsProperty("decisao", "COMPRA");
+        defineObsProperty("decisao", "RESERVA");
         defineObsProperty("useTime", useMinutes);
+        defineObsProperty("useDate", "31/01 - 10:00");
         definirTipoVaga();
 
         // switch(choice) {
@@ -25,9 +24,14 @@ public class DriverControl extends Artifact {
         // primeiro caso: motorista quer escolher um tipo de vaga
         // e pagar agora sem proposta, apenas com o preço de tabela
         // */
+        // useDate("useDate", "NOW");
         // defineObsProperty("escolha", "COMPRAR");
         // break;
         // case 1:
+        // /*
+        // segundo caso: motorista quer reservar uma vaga para
+        // para utilizar em um tempo futuro
+        // */
         // proposta.setTipoVaga("LONGA");
         // break;
         // case 2:

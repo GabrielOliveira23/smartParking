@@ -8,71 +8,89 @@ public class ParkControl extends Artifact {
     Proposta proposta = new Proposta();
 
     void init() {
-        defineObsProperty("VagaDisponivel", false);
-        
         Random random = new Random();
 
-        int cobertasDisponiveis = 0;
-        int curtasDisponiveis = 0;
-        int longasDisponiveis = 0;
-        int descobertasDisponiveis = 0;
-        
         for (int i = 1; i < 7; i++) {
             listaVagas.add(new Vaga(i, TipoVagaEnum.CURTA));
-            if (random.nextBoolean()) {
+            if (random.nextBoolean())
                 listaVagas.get(i - 1).ocuparVaga();
-            }
-            else {
-                curtasDisponiveis++;
-            }
         }
-        
+
         for (int i = 7; i < 10; i++) {
             listaVagas.add(new Vaga(i, TipoVagaEnum.LONGA));
-            if (random.nextBoolean()) {
+            if (random.nextBoolean())
                 listaVagas.get(i - 1).ocuparVaga();
-            }else
-                longasDisponiveis++;
         }
-        
+
         for (int i = 10; i < 14; i++) {
             listaVagas.add(new Vaga(i, TipoVagaEnum.COBERTA));
-            if (random.nextBoolean()) {
+            if (random.nextBoolean())
                 listaVagas.get(i - 1).ocuparVaga();
-            } else
-                cobertasDisponiveis++;
         }
 
         for (int i = 14; i < 20; i++) {
             listaVagas.add(new Vaga(i, TipoVagaEnum.DESCOBERTA));
-            if (random.nextBoolean()) {
+            if (random.nextBoolean())
                 listaVagas.get(i - 1).ocuparVaga();
-            } else
-                descobertasDisponiveis++;
         }
-
-        defineObsProperty("curtasDisponiveis", curtasDisponiveis);
-        defineObsProperty("longasDisponiveis", longasDisponiveis);
-        defineObsProperty("cobertasDisponiveis", cobertasDisponiveis);
-        defineObsProperty("descobertasDisponiveis", descobertasDisponiveis);
     }
 
     static String consultarTipoVaga(int idVaga) {
-        for(Vaga vaga : listaVagas) {
-            if (vaga.getId() == idVaga) {
+        for (Vaga vaga : listaVagas) {
+            if (vaga.getId() == idVaga)
                 return vaga.getTipoVaga();
-            }
         }
         return null;
     }
 
     @OPERATION
-    void consultarVaga(String tipoVaga) {
+    void consultarVaga(String tipoVaga, String date, String driverIntention) {
+        boolean isBooked = true;
         for (Vaga vaga : listaVagas) {
-            if (vaga.getTipoVaga().equals(tipoVaga.toUpperCase()) && vaga.isDisponivel()) {
+            if (vaga.getTipoVaga().equals(tipoVaga.toUpperCase())) {
+                switch (driverIntention) {
+                    case "COMPRA": {
+                        if (vaga.isDisponivel()) {
+                            defineObsProperty("vagaDisponivel", true);
+                            defineObsProperty("idVaga", vaga.getId());
+                            System.out
+                                    .println("Vaga consultada: " + vaga.getId() + " - " + vaga.getTipoVaga() + " - "
+                                            + vaga.isDisponivel());
+                            return;
+                        }
+                        break;
+                    }
+                    case "RESERVA": {
+                        List<String> reservations = vaga.getReservas();
+                        if (vaga.getReservas().isEmpty()) {
+                            // if doesnt exist reservations
+                            defineObsProperty("vagaDisponivel", true);
+                            defineObsProperty("idVaga", vaga.getId());
+                            return;
+                        } else {
+                            // if exist reservations
+                            String[] dateTimeRequired = date.split(" - ");
+                            for (String reserva : reservations) {
+                                String[] dateTime = reserva.split(" - ");
+                                if (dateTime[0].equals(dateTimeRequired[0])
+                                        && dateTime[1].equals(dateTimeRequired[1])) {
+                                    // if the reservation is the same as the required
+                                    isBooked = true;
+                                    System.out.println("------- Vaga " + vaga.getId() + " reservada -------");
+                                    break;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    default:
+                        System.out.println("Intenção não reconhecida");
+                        break;
+                }
+            }
+            if (!isBooked) {
                 defineObsProperty("vagaDisponivel", true);
                 defineObsProperty("idVaga", vaga.getId());
-                System.out.println("Vaga consultada: " + vaga.getId() + " - " + vaga.getTipoVaga() + " - " + vaga.isDisponivel());
                 return;
             }
         }
@@ -101,14 +119,14 @@ public class ParkControl extends Artifact {
     }
 
     @OPERATION
-    void liberarVaga(int idVaga) {
-        for (Vaga vaga : listaVagas) {
-            if ((vaga.getId() == idVaga) && !vaga.isDisponivel()) {
-                vaga.liberarVaga();
-                defineObsProperty("motoristaSaindo", true);
-                return;
-            }
-        }
+    void bookVacancy(int idVacancy, String date, int minutes) {
+        // use minimum price to make an offer,
+        // like 0.8 of price is minimum acceptable
+        double price = ParkPricing.consultPrice(idVacancy);
+        price = Math.round(price * ((double) minutes / 60));
+        System.out.println("Valor a pagar: " + price);
+
+        defineObsProperty("valueToPay", price);
     }
 
     @OPERATION
@@ -153,11 +171,11 @@ public class ParkControl extends Artifact {
 
         return (double) (quantidadeDisponivel / quantidadeVagas);
     }
-    
+
     boolean getResultadoProposta(Double taxaDisponivel, Double margemLucro) {
         Double precoProposta = proposta.getPrecoProposta();
         Double precoTabela = proposta.getPrecoTabela();
-        
+
         if (taxaDisponivel >= 0.75) {
             return true;
         } else if (taxaDisponivel >= 0.5 && precoProposta >= precoTabela) {

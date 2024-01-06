@@ -11,30 +11,37 @@
 
 +vagaDisponivel(X)[source(self)] <- .print("Vaga disponivel: ", X).
 
-+!startNegotiation <- 
++valueToPay(Value)[source(manager)] <- !pay(Value).
+
++!startNegotiation[source(self)] : true <- 
     ?decisao(Choice);
     .print("Escolha: ", Choice);
     ?tipoVaga(Tipo);
 
     consultPrice(Tipo);
     ?precoTabela(Price);
+    ?useDate(Date);
     
     .print("Tipo da vaga: ", Tipo);
-    .print("Preco da vaga: ", Price);
+    .print("Preco da vaga (por hora): ", Price);
+    .print("Data de uso: ", Date);
 
-    if (Choice == "COMPRA") {
-        .send(manager, achieve, isVagaDisponivel(Tipo, Choice));
+    if (Choice == "COMPRA" | Choice == "RESERVA") {
+        .send(manager, achieve, isVagaDisponivel(Tipo, Date, Choice));
     } else {
         .print("Escolha invalida");
     }.
 
-+vagaDisponivel(X)[source(Manager)] : true <-
++vagaDisponivel(X)[source(manager)] : true <-
+    .wait(3000);
     if (X == true) {
         ?decisao(Choice);
-        if (Choice == "COMPRA") {
             ?idVaga(Id);
+        if (Choice == "COMPRA") {
             !park;
-            !compra(Id);
+            !buy(Id);
+        } elif (Choice == "RESERVA") {
+            !book(Id);
         } else {
             .print("Escolha invalida");
         }
@@ -51,13 +58,20 @@
 	.wait(myWallet(MyPriv,MyPub));
     +driverWallet(MyPub).
 
-+!compra(Id) : true <- 
++!buy(Id) : true <- 
     .print("Compra de vaga");
     ?useTime(Minutes);
+    // make manager define value
     defineValueToPay(Id, Minutes);
     ?valueToPay(Value);
     !pay(Value).
     //enviar mensagem para o gerente para a verificacao de transferencia
+
++!book(Id) : true <-
+    .print("Reserva de vaga");
+    ?useTime(Minutes);
+    ?useDate(Date);
+    .send(manager, achieve, reservation(Id,Date,Minutes)).
 
 +!pay(Price) : not bankAccount(ok)[source(bank)] & not driverWallet(MyPub) <-
     .print("Criando conta bancaria");
@@ -70,20 +84,19 @@
 
 +!pay(Price) : bankAccount(ok)[source(bank)] & cryptocurrency(Coin) 
 			& chainServer(Server) & myWallet(MyPriv,MyPub) 
-			& managerWallet(Manager) <-
-    ?useTime(Min);
+			& managerWallet(Manager) & idVaga(IdVaga)
+            & useTime(Min) <-
     .print("Tempo de uso (minutos): ", Min);
     .print("Valor a pagar: ", Price);
 
-    .print("Pagando vaga.....");
+    .print("Pagamento em andamento...");
     
     ?tipoVaga(Vaga);
 	velluscinum.transferToken(Server,MyPriv,MyPub,Coin,Manager,Price,payment);
 	.wait(payment(IdTransfer));
     .print("Pagamento realizado");
 	
-    ?idVaga(IdVaga);
-    .send(manager, achieve, vacancyPayment(IdTransfer, IdVaga)).
+    .send(manager, achieve, vacancyPayment(IdTransfer, IdVaga, Price)).
 
 +!requestLend : cryptocurrency(Coin) & bankWallet(BankW) 
             & chainServer(Server) 
@@ -105,6 +118,7 @@
 +!park: true <-
     ?idVaga(Id);
     .print("Estacionando veiculo na vaga ", Id);
+    .send(manager,tell,parking(Id));
     .print("--------------------------------------------------------------");
     ?useTime(Min);
     .wait(Min*10).
