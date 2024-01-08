@@ -15,6 +15,9 @@
 	+managerWallet(Pub).
 
 +!isVagaDisponivel(Tipo, Date, Intention)[source(driver)] : true <-
+	.send(driver, askOne, driverWallet(DriverW), Reply);
+	.wait(5000);
+	+Reply;
 	+driverIntention(Intention);
 	consultarVaga(Tipo, Date, Intention).
 	// se a intencao for reservar fazer a condicao para isso
@@ -22,29 +25,34 @@
 +!reservation(Id, Date, Minutes)[source(driver)] : true <-
 	.print("Reserving vacancy");
 	bookVacancy(Id, Date, Minutes).
-	
 
 +!vacancyPayment(Transfer, IdVaga, Value)[source(driver)] : chainServer(Server) 
             & myWallet(MyPriv,MyPub) & driverIntention(Intention) <-
-	.send(driver, askOne, driverWallet(Driver), Reply);
-	+Reply;
 	.print("Validating payment -> Vacancy: ", IdVaga);
 	velluscinum.stampTransaction(Server,MyPriv,MyPub,Transfer);
 	.print("Vacancy paid!");
 	if (Intention == "RESERVA") {
-		!sendReservation(Driver, IdVaga, Value);
+		!sendReservation(DriverW, IdVaga, Value);
 	} else {
 		driverExiting(IdVaga);
 		.send(driver, achieve, leave);
 	}.
 
-+!sendReservation(Driver, IdVaga, Value)[source(self)] : chainServer(Server) 
-            & myWallet(MyPriv,MyPub) <-
-	.concat("Vacancy Reservation -> Id: ", IdVaga, Name);
-    velluscinum.deployNFT(Server, MyPriv, MyPub, Name, Value, registredContract);
++!sendReservation(DriverW, IdVaga, Value)[source(self)] : chainServer(Server) 
+            & myWallet(MyPriv,MyPub) & driverWallet(DriverW) <-
+	.concat("name:manager;reservation:", IdVaga, Name);
+    velluscinum.deployNFT(Server, MyPriv, MyPub,
+				Name, 
+				"description:reservation",
+				account);
+	.wait(account(AssetId));
 	// transfer nft
+	.concat("description:reservation;vacancy:", IdVaga, Description);
+	velluscinum.transferNFT(Server, MyPriv, MyPub, AssetId, DriverW,
+				Description, requestID);
+	.wait(requestID(TransferId));
 	// send id transfer to driver
-	.print("Sending reservation to server").
+	.send(driver, tell, reservationNFT(TransferId)).
 
 +vagaDisponivel(X) <-
 	.send(driver, tell, vagaDisponivel(X)).

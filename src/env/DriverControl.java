@@ -40,6 +40,24 @@ public class DriverControl extends Artifact {
         // }
     }
 
+    @OPERATION
+    void defineReservationChoice() {
+        Random random = new Random();
+        int choice = random.nextInt(2);
+
+        switch(choice) {
+            case 0: {
+                /*
+                primeiro caso: usar a reserva para entrar
+                no estacionamento
+                */
+                System.out.println("Entrar no estacionamento");
+                defineObsProperty("reservationChoice", "USAR");
+                break;
+            }
+        }
+    }
+
     void definirTipoVaga() {
         Random random = new Random();
         int randomInt = random.nextInt(4);
