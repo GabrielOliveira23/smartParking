@@ -130,10 +130,12 @@
     ?idVaga(Id);
     .print("Estacionando veiculo na vaga ", Id);
     .send(manager, tell, parking(Id));
+    +parked(Id);
     .print("--------------------------------------------------------------");
     ?useTime(Min);
     .wait(Min*10).
 
 +!leave[source(manager)] : true <-
     .print("Saindo da vaga");
+    -parked(Id);
     .print("--------------------------------------------------------------").
