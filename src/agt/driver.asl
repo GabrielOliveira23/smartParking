@@ -56,7 +56,7 @@
 +!requestLend : cryptocurrency(Coin) & bankWallet(BankW) 
             & chainServer(Server) 
             & myWallet(MyPriv,MyPub) <-
-	.print("Requesting Lend");
+	.print("Pedindo emprestimo...");
 	velluscinum.deployNFT(Server,MyPriv,MyPub,
 				"name:motorista;address:5362fe5e-aaf1-43e6-9643-7ab094836ff4",
 				"description:Createing Bank Account",
@@ -89,9 +89,8 @@
     }.
 
 
-
 +!buy(Id) : true <- 
-    .print("Compra de vaga");
+    .print("Pagamento da vaga");
     ?useTime(Minutes);
     // make manager define value
     defineValueToPay(Id, Minutes);
@@ -107,14 +106,15 @@
 
 +!pay(Price) : bankAccount(ok)[source(bank)] & cryptocurrency(Coin) 
 			& chainServer(Server) & myWallet(MyPriv,MyPub) 
-			& managerWallet(Manager) & idVaga(IdVaga)
-            & useTime(Min) <-
+			& managerWallet(Manager) <-
+    ?idVaga(IdVaga);
+    ?useTime(Min);    
+    ?tipoVaga(Vaga);
+
     .print("Tempo de uso (minutos): ", Min);
     .print("Valor a pagar: ", Price);
-
     .print("Pagamento em andamento...");
-    
-    ?tipoVaga(Vaga);
+
 	velluscinum.transferToken(Server,MyPriv,MyPub,Coin,Manager,Price,payment);
 	.wait(payment(IdTransfer));
     .print("Pagamento realizado");
@@ -123,7 +123,7 @@
 
 +!stampProcess(TransactionId)[source(self)] : chainServer(Server)
             & myWallet(MyPriv,MyPub) <-
-    .print("Stamping process...");
+    .print("Validando transferencia...");
     velluscinum.stampTransaction(Server, MyPriv, MyPub, TransactionId).
 
 +!park: true <-
