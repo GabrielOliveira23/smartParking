@@ -7,13 +7,11 @@ public class ParkPricing extends Artifact {
     private static Map<TipoVagaEnum, Double> precos;
     
     void init() {
-        defineObsProperty("precoVaga", 0);
-
         precos = new HashMap<>();
         precos.put(TipoVagaEnum.CURTA, 10.0);
-        precos.put(TipoVagaEnum.LONGA, 15.0);
-        precos.put(TipoVagaEnum.COBERTA, 20.0);
-        precos.put(TipoVagaEnum.DESCOBERTA, 12.0);
+        precos.put(TipoVagaEnum.LONGA, 14.0);
+        precos.put(TipoVagaEnum.CURTACOBERTA, 18.0);
+        precos.put(TipoVagaEnum.LONGACOBERTA, 20.0);
     }
 
     public static Double getPreco(TipoVagaEnum tipoVaga) {

@@ -23,13 +23,13 @@ public class ParkControl extends Artifact {
         }
 
         for (int i = 10; i < 14; i++) {
-            listaVagas.add(new Vaga(i, TipoVagaEnum.COBERTA));
+            listaVagas.add(new Vaga(i, TipoVagaEnum.LONGACOBERTA));
             if (random.nextBoolean())
                 listaVagas.get(i - 1).ocuparVaga();
         }
 
         for (int i = 14; i < 20; i++) {
-            listaVagas.add(new Vaga(i, TipoVagaEnum.DESCOBERTA));
+            listaVagas.add(new Vaga(i, TipoVagaEnum.CURTACOBERTA));
             if (random.nextBoolean())
                 listaVagas.get(i - 1).ocuparVaga();
         }
@@ -143,12 +143,12 @@ public class ParkControl extends Artifact {
                     taxaDisponivel = verificarQuantidadeDisponivel(TipoVagaEnum.LONGA);
                     defineObsProperty("decisaoProposta", getResultadoProposta(taxaDisponivel, margemLucro));
                     break;
-                case "COBERTA":
-                    taxaDisponivel = verificarQuantidadeDisponivel(TipoVagaEnum.COBERTA);
+                case "LONGACOBERTA":
+                    taxaDisponivel = verificarQuantidadeDisponivel(TipoVagaEnum.LONGACOBERTA);
                     defineObsProperty("decisaoProposta", getResultadoProposta(taxaDisponivel, margemLucro));
                     break;
-                case "DESCOBERTA":
-                    taxaDisponivel = verificarQuantidadeDisponivel(TipoVagaEnum.DESCOBERTA);
+                case "CURTACOBERTA":
+                    taxaDisponivel = verificarQuantidadeDisponivel(TipoVagaEnum.CURTACOBERTA);
                     defineObsProperty("decisaoProposta", getResultadoProposta(taxaDisponivel, margemLucro));
                     break;
             }

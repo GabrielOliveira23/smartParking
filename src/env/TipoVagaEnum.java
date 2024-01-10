@@ -1,8 +1,8 @@
 public enum TipoVagaEnum {
     LONGA,
     CURTA,
-    COBERTA,
-    DESCOBERTA;
+    LONGACOBERTA,
+    CURTACOBERTA;
 
     public String tipoVaga() {
         switch (this) {
@@ -10,10 +10,10 @@ public enum TipoVagaEnum {
                 return "Longa";
             case CURTA:
                 return "Curta";
-            case COBERTA:
-                return "Coberta";
-            case DESCOBERTA:
-                return "Descoberta";
+            case LONGACOBERTA:
+                return "LongaCoberta";
+            case CURTACOBERTA:
+                return "CurtaCoberta";
             default:
                 return "Tipo de vaga inválido";
         }
