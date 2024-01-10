@@ -53,8 +53,7 @@ public class ParkControl extends Artifact {
                         if (vaga.isDisponivel()) {
                             defineObsProperty("vagaDisponivel", true);
                             defineObsProperty("idVaga", vaga.getId());
-                            System.out
-                                    .println("Vaga consultada: " + vaga.getId() + " - " + vaga.getTipoVaga() + " - "
+                            log("Vaga consultada: " + vaga.getId() + " - " + vaga.getTipoVaga() + " - "
                                             + vaga.isDisponivel());
                             return;
                         }
@@ -76,7 +75,7 @@ public class ParkControl extends Artifact {
                                         && dateTime[1].equals(dateTimeRequired[1])) {
                                     // if the reservation is the same as the required
                                     isBooked = true;
-                                    System.out.println("------- Vaga " + vaga.getId() + " reservada -------");
+                                    log("------- Vaga " + vaga.getId() + " reservada -------");
                                     break;
                                 }
                             }
@@ -84,7 +83,7 @@ public class ParkControl extends Artifact {
                         break;
                     }
                     default:
-                        System.out.println("Intenção não reconhecida");
+                        log("Intenção não reconhecida");
                         break;
                 }
             }
@@ -112,7 +111,7 @@ public class ParkControl extends Artifact {
         for (Vaga vaga : listaVagas) {
             if ((vaga.getId() == idVaga) && !vaga.isDisponivel()) {
                 vaga.liberarVaga();
-                System.out.println("Vaga liberada: " + vaga.getId());
+                log("Vaga liberada: " + vaga.getId());
                 return;
             }
         }
@@ -124,7 +123,7 @@ public class ParkControl extends Artifact {
         // like 0.8 of price is minimum acceptable
         double price = ParkPricing.consultPrice(idVacancy);
         price = Math.round(price * ((double) minutes / 60));
-        System.out.println("Valor a pagar: " + price);
+        log("Valor a pagar: " + price);
 
         defineObsProperty("valueToPay", price);
     }

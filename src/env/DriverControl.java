@@ -3,7 +3,7 @@ import cartago.*;
 import java.util.Random;
 
 public class DriverControl extends Artifact {
-    private Proposta proposta = new Proposta();
+    // private Proposta proposta = new Proposta();
 
     @OPERATION
     void defineChoice() {
@@ -41,7 +41,7 @@ public class DriverControl extends Artifact {
                 break;
             }
             default: {
-                System.out.println("Escolha inválida");
+                log("Escolha inválida");
                 break;
             }
         }
@@ -59,7 +59,7 @@ public class DriverControl extends Artifact {
                  * primeiro caso: usar a reserva para entrar
                  * no estacionamento
                  */
-                System.out.println("Entrar no estacionamento");
+                log("Entrar no estacionamento");
                 defineObsProperty("reservationChoice", "USAR");
                 break;
             }
@@ -86,11 +86,11 @@ public class DriverControl extends Artifact {
 
     @OPERATION
     void makeOffer(int idVaga, double precoTabela, String tipoVaga) {
-        if (tipoVaga != null) {
-            TipoVagaEnum typeVaga = TipoVagaEnum.setTipoVaga(tipoVaga);
+        // if (tipoVaga != null) {
+        //     TipoVagaEnum typeVaga = TipoVagaEnum.setTipoVaga(tipoVaga);
 
-            double precoFinal = barganhar(precoTabela);
-        }
+        //     double precoFinal = barganhar(precoTabela);
+        // }
     }
 
     double barganhar(Double precoTabela) {

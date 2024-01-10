@@ -104,6 +104,13 @@
     ?useDate(Date);
     .send(manager, achieve, reservation(Id,Date,Minutes)).
 
++!pay(Price) : not managerWallet(Manager) <-
+    .print("ERRO CARTEIRA GERENTE NAO CRIADA");
+    .wait(5000);
+    .send(manager,askOne,managerWallet(Manager),Reply);
+    +Reply;
+    !pay(Price).
+    
 +!pay(Price) : bankAccount(ok)[source(bank)] & cryptocurrency(Coin) 
 			& chainServer(Server) & myWallet(MyPriv,MyPub) 
 			& managerWallet(Manager) <-
