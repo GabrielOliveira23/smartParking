@@ -13,7 +13,7 @@ public class DriverControl extends Artifact {
 
         useMinutes = useMinutes < 20 ? 20 : useMinutes;
 
-        // choice = 0;
+        // choice = 1;
         switch (choice) {
             case 0: {
                 /*

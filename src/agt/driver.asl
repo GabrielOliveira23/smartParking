@@ -30,13 +30,19 @@
         .print("Vaga indisponivel");
     }.
 
-+reservationNFT(TransactionId)[source(manager)] <- 
++reservationNFT(AssetId, TransactionId)[source(manager)] <- 
     !stampProcess(TransactionId);
     .print("Reserva recebida");
+    +reservationNFT(AssetId);
     defineReservationChoice.
 
 +reservationChoice(Choice) <- 
-    .print("Escolha de reserva: ", Choice).
+    .print("Escolha de reserva: ", Choice);
+    if (Choice == "USAR") {
+        !useReservation;
+    } else {
+        .print("Escolha invalida");
+    }.
 
 +!choose : true <-
     defineChoice;
@@ -104,13 +110,24 @@
     ?useDate(Date);
     .send(manager, achieve, reservation(Id,Date,Minutes)).
 
++!useReservation[source(self)] : reservationNFT(AssetId)
+            & chainServer(Server) & myWallet(MyPriv,MyPub)
+            & managerWallet(ManagerW) <-
+    .wait(5000);
+    .print("Cheguei no estacionamento");
+    .print("Usando reserva...");
+    velluscinum.transferNFT(Server,MyPriv,MyPub,AssetId,ManagerW,
+                 "description:using reservation;",requestID);
+    .wait(requestID(TransferId));
+    .send(manager, tell, reservationUse(TransferId)).
+
+// as vezes a carteira do gerente nao esta criada
 +!pay(Price) : not managerWallet(Manager) <-
-    .print("ERRO CARTEIRA GERENTE NAO CRIADA");
     .wait(5000);
     .send(manager,askOne,managerWallet(Manager),Reply);
     +Reply;
     !pay(Price).
-    
+
 +!pay(Price) : bankAccount(ok)[source(bank)] & cryptocurrency(Coin) 
 			& chainServer(Server) & myWallet(MyPriv,MyPub) 
 			& managerWallet(Manager) <-
@@ -133,16 +150,22 @@
     .print("Validando transferencia...");
     velluscinum.stampTransaction(Server, MyPriv, MyPub, TransactionId).
 
-+!park: true <-
-    ?idVaga(Id);
++!park[source(self)] : useTime(Min) & idVaga(Id) <-
+    .print("--------------------------------------------------------------");
     .print("Estacionando veiculo na vaga ", Id);
     .send(manager, tell, parking(Id));
     +parked(Id);
-    .print("--------------------------------------------------------------");
-    ?useTime(Min);
     .wait(Min*10).
 
-+!leave[source(manager)] : true <-
++!park[source(manager)] : useTime(Min) & idVaga(Id) <-
+    .print("--------------------------------------------------------------");
+    .print("Estacionando veiculo na vaga ", Id);
+    +parked(Id);
+    // possibilidade de exceder o valor especificado pela reserva
+    .wait(Min*10);
+    !leave.
+
++!leave : true <-
     .print("Saindo da vaga");
     -parked(Id);
     .print("--------------------------------------------------------------").

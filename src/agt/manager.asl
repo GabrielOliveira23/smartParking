@@ -15,6 +15,10 @@
 
 +parking(Id) <- ocuparVaga(Id).
 
++reservationUse(TransactionId) <- !stampProcess(TransactionId);
+	.print("reserva usada");
+	.send(driver, achieve, park).
+
 +!createWallet <-
 	.print("Criando carteira digital!");
 	velluscinum.buildWallet(myWallet);
@@ -59,4 +63,4 @@
 	velluscinum.transferNFT(Server, MyPriv, MyPub, AssetId, DriverW,
 				Description, requestID);
 	.wait(requestID(TransferId));
-	.send(driver, tell, reservationNFT(TransferId)).
+	.send(driver, tell, reservationNFT(AssetId, TransferId)).
