@@ -17,13 +17,11 @@ mas smartParking {
   agent driver: driver.asl {
     focus: network.parkPricing, network.driverControl 
   }
-
+  
   agent manager: manager.asl {
     focus: network.parkControl, network.parkPricing
   }
 
-  // agent chef
-  // agent glutton
   agent bank
 
   workspace network {

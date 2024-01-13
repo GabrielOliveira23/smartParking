@@ -13,7 +13,6 @@ public class DriverControl extends Artifact {
 
         useMinutes = useMinutes < 20 ? 20 : useMinutes;
 
-        // choice = 1;
         switch (choice) {
             case 0: {
                 /*
@@ -40,6 +39,17 @@ public class DriverControl extends Artifact {
                 definirTipoVaga();
                 break;
             }
+            case 2: {
+                /*
+                 * terceiro caso: motorista quer negociar a
+                 * transferencia de uma reserva de outro motorista
+                 */
+
+                defineObsProperty("decisao", "COMPRARESERVA");
+                defineObsProperty("useDate", "31/01 - 10:00");
+                definirTipoVaga();
+                break;
+            }
             default: {
                 log("Escolha inválida");
                 break;
@@ -48,11 +58,17 @@ public class DriverControl extends Artifact {
     }
 
     @OPERATION
-    void defineReservationChoice() {
+    void defineReservationChoice(String nft) {
         Random random = new Random();
         int choice = random.nextInt(2);
 
-        choice = 0;
+        if (nft.isEmpty()) {
+            log("Nenhuma reserva encontrada");
+            // testing plan fail
+            failed("Nenhuma reserva encontrada");
+            return;
+        }
+
         switch (choice) {
             case 0: {
                 /*
@@ -61,6 +77,15 @@ public class DriverControl extends Artifact {
                  */
                 log("Entrar no estacionamento");
                 defineObsProperty("reservationChoice", "USAR");
+                break;
+            }
+            case 1: {
+                /*
+                 * segundo caso: transferir a reserva para
+                 * outro motorista
+                 */
+                log("Processo de venda de reserva");
+                defineObsProperty("reservationChoice", "VENDER");
                 break;
             }
         }
@@ -87,9 +112,9 @@ public class DriverControl extends Artifact {
     @OPERATION
     void makeOffer(int idVaga, double precoTabela, String tipoVaga) {
         // if (tipoVaga != null) {
-        //     TipoVagaEnum typeVaga = TipoVagaEnum.setTipoVaga(tipoVaga);
+        // TipoVagaEnum typeVaga = TipoVagaEnum.setTipoVaga(tipoVaga);
 
-        //     double precoFinal = barganhar(precoTabela);
+        // double precoFinal = barganhar(precoTabela);
         // }
     }
 

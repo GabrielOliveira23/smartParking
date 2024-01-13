@@ -4,7 +4,6 @@
 /* Initial beliefs */
 
 /* Initial goals */
-
 !choose.
 
 /* Plans */
@@ -33,13 +32,17 @@
 +reservationNFT(AssetId, TransactionId)[source(manager)] <- 
     !stampProcess(TransactionId);
     .print("Reserva recebida");
-    +reservationNFT(AssetId);
-    defineReservationChoice.
+    defineReservationChoice(AssetId).
+
++reservationAvailable(Type,Date,Min)[source(driver)] <-
+    .print("Motorista colocou a reserva disponivel").
 
 +reservationChoice(Choice) <- 
     .print("Escolha de reserva: ", Choice);
     if (Choice == "USAR") {
         !useReservation;
+    } elif(Choice == "VENDER") {
+        !makeVacancyAvailable;
     } else {
         .print("Escolha invalida");
     }.
@@ -77,19 +80,21 @@
 	.send(bank, achieve, lending(PP,MyPub,100)).
 
 
-+!startNegotiation[source(self)] : decisao(Choice) & tipoVaga(Tipo) <- 
++!startNegotiation[source(self)] : decisao(Choice) & tipoVaga(Type) <- 
     .print("Escolha: ", Choice);
 
-    consultPrice(Tipo);
+    consultPrice(Type);
     ?precoTabela(Price);
     ?useDate(Date);
     
-    .print("Tipo da vaga: ", Tipo);
+    .print("Tipo da vaga: ", Type);
     .print("Preco da vaga (por hora): ", Price);
     .print("Data de uso: ", Date);
 
     if (Choice == "COMPRA" | Choice == "RESERVA") {
-        .send(manager, achieve, isVagaDisponivel(Tipo, Date, Choice));
+        .send(manager, achieve, isVagaDisponivel(Type, Date, Choice));
+    } elif (Choice == "COMPRARESERVA") {
+        !buyReservation(Type, Date);
     } else {
         .print("Escolha invalida");
     }.
@@ -103,6 +108,10 @@
     ?valueToPay(Value);
     !pay(Value).
     //enviar mensagem para o gerente para a verificacao de transferencia
+
+
++!buyReservation(Type, Date)[source(self)] : reservationAvailable <-
+    .print("comprando reserva de outro motorista").
 
 +!book(Id) : true <-
     .print("Reserva de vaga");
@@ -120,6 +129,17 @@
                  "description:using reservation;",requestID);
     .wait(requestID(TransferId));
     .send(manager, tell, reservationUse(TransferId)).
+
++!makeVacancyAvailable[source(self)] : useDate(Date) 
+            & useTime(Min) & tipoVaga(Type) <-
+    .print("RESERVA DISPONIBILIZADA");
+    .broadcast(tell, reservationAvailable(Type,Date,Min)).
+
++!makeVacancyAvailable : not useDate(Date) <- .print("DATA").
+
++!makeVacancyAvailable : not useTime(Min) <- .print("TEMPO").
+
++!makeVacancyAvailable : not tipoVaga(Type) <- .print("TIPO").
 
 // as vezes a carteira do gerente nao esta criada
 +!pay(Price) : not managerWallet(Manager) <-

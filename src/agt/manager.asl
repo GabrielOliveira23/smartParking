@@ -19,6 +19,9 @@
 	.print("reserva usada");
 	.send(driver, achieve, park).
 
++reservationAvailable(Type,Date,Min)[source(driver)] <-
+	.print("Motorista colocou reserva disponivel").
+
 +!createWallet <-
 	.print("Criando carteira digital!");
 	velluscinum.buildWallet(myWallet);
