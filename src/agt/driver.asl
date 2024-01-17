@@ -119,7 +119,7 @@
     ?useDate(Date);
     .send(manager, achieve, reservation(Id,Date,Minutes)).
 
-+!useReservation[source(self)] : reservationNFT(AssetId)
++!useReservation[source(self)] : reservationNFT(AssetId, TransactionId)
             & chainServer(Server) & myWallet(MyPriv,MyPub)
             & managerWallet(ManagerW) <-
     .wait(5000);
