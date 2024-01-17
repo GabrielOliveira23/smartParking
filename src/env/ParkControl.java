@@ -10,25 +10,25 @@ public class ParkControl extends Artifact {
     void init() {
         Random random = new Random();
 
-        for (int i = 1; i < 7; i++) {
+        for (int i = 1; i < 6; i++) {
             listaVagas.add(new Vaga(i, TipoVagaEnum.CURTA));
             if (random.nextBoolean())
                 listaVagas.get(i - 1).ocuparVaga();
         }
 
-        for (int i = 7; i < 10; i++) {
+        for (int i = 6; i < 11; i++) {
             listaVagas.add(new Vaga(i, TipoVagaEnum.LONGA));
             if (random.nextBoolean())
                 listaVagas.get(i - 1).ocuparVaga();
         }
 
-        for (int i = 10; i < 14; i++) {
+        for (int i = 11; i < 15; i++) {
             listaVagas.add(new Vaga(i, TipoVagaEnum.LONGACOBERTA));
             if (random.nextBoolean())
                 listaVagas.get(i - 1).ocuparVaga();
         }
 
-        for (int i = 14; i < 20; i++) {
+        for (int i = 15; i < 21; i++) {
             listaVagas.add(new Vaga(i, TipoVagaEnum.CURTACOBERTA));
             if (random.nextBoolean())
                 listaVagas.get(i - 1).ocuparVaga();
