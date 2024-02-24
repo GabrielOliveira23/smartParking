@@ -13,20 +13,27 @@
 */
 
 mas smartParking {
-
-  agent driver: driver.asl {
+  agent driver: newDriver.asl {
     focus: network.parkPricing, network.driverControl 
   }
-  
-  agent manager: manager.asl {
-    focus: network.parkControl, network.parkPricing
+
+  agent manager: newManager.asl {
+    focus: network.parkPricing
   }
+
+  // agent driver: driver.asl {
+  //   focus: network.parkPricing, network.driverControl 
+  // }
+  
+  // agent manager: manager.asl {
+  //   focus: network.parkControl, network.parkPricing
+  // }
 
   agent bank
 
   workspace network {
     artifact driverControl: DriverControl
-    artifact parkControl: ParkControl
+    // artifact parkControl: ParkControl
     artifact parkPricing: ParkPricing
   }
 
