@@ -30,5 +30,5 @@ mas smartParking {
     artifact parkPricing: ParkPricing
   }
 
-  uses package: velluscinum "com.github.chon-group:velluscinum-jcm:0.9-rc"
+  uses package: velluscinum "com.github.chon-group:velluscinum-jcm:1.0"
 }
