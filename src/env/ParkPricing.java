@@ -28,15 +28,6 @@ public class ParkPricing extends Artifact {
         }
     }
 
-    static double consultPrice(int idVaga) {
-        String tipo = ParkControl.consultarTipoVaga(idVaga);
-        if (tipo != null) {
-            TipoVagaEnum typeVaga = TipoVagaEnum.setTipoVaga(tipo);
-            return getPreco(typeVaga);
-        }
-        return 0.0;
-    }
-
     
 // levar para driver
     @OPERATION

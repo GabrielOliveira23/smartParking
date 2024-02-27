@@ -18,7 +18,7 @@ mas smartParking {
   }
 
   agent manager: newManager.asl {
-    focus: network.parkPricing
+    focus: network.parkPricing, network.parkControl
   }
 
   // agent driver: driver.asl {
@@ -33,9 +33,9 @@ mas smartParking {
 
   workspace network {
     artifact driverControl: DriverControl
-    // artifact parkControl: ParkControl
+    artifact parkControl: ParkControl
     artifact parkPricing: ParkPricing
   }
 
-  uses package: velluscinum "com.github.chon-group:velluscinum-jcm:0.9-rc"
+  uses package: velluscinum "com.github.chon-group:velluscinum-jcm:1.0"
 }

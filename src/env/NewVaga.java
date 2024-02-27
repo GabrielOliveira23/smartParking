@@ -1,13 +1,13 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class Vaga {
-    private int id;
+public class NewVaga {
+    private String id;
     private TipoVagaEnum tipoVaga;
     private boolean disponivel;
     private List<String> reservas;
 
-    public Vaga(int id, TipoVagaEnum tipoVaga) {
+    public NewVaga(String id, TipoVagaEnum tipoVaga) {
         this.id = id;
         this.tipoVaga = tipoVaga;
         this.disponivel = true;
@@ -23,7 +23,7 @@ public class Vaga {
         return reservas;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
