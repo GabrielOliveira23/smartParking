@@ -12,33 +12,22 @@
 
 +vagaDisponivel(X)[source(self)] <- .print("Vaga disponivel: ", X).
 
-+valorAPagarUso(Value)[source(manager)] <- !pagarUso(Value).
-
-+vagaDisponivel(X)[source(manager)] : true <-
++vagaDisponivelParaReserva(X)[source(manager)] : X == true <-
     .wait(3000);
-    if (X == true) {
-        ?idVaga(Id);
-        ?decisao(Choice);
-        if (Choice == "COMPRA") {
-            !estacionar;
-        } elif (Choice == "RESERVA") {
-            !book(Id);
-        } else {
-            .print("Escolha invalida");
-        }
-    } elif (X == false) {
-        .print("Vaga indisponivel");
+    ?tipoVaga(Tipo);
+    ?decisao(Choice);
+    ?dataUso(Data);
+    if (Choice == "COMPRA") {
+        !estacionar;
+    } elif (Choice == "RESERVA") {
+        .print("Indo para reservar vaga...");
+        !reservar(Tipo, Data);
+    } else {
+        .print("Escolha invalida");
     }.
 
-+liberadoParaEstacionar(Id)[source(manager)] <-
-    ?tempoUso(Min);
-    +parked(Id).
-
-+vagaOcupada(Id)[source(manager)] <-
-    .print("Vaga ocupada");
-    ?tempoUso(Min);
-    .wait(Min*10);
-    !comprar.
++vagaDisponivelParaReserva(Status) : X == false <-
+    .print("Vaga indisponivel").
 
 +reservationNFT(AssetId, TransactionId)[source(manager)] <- 
     !stampProcess(TransactionId);
@@ -47,16 +36,6 @@
 
 +reservationAvailable(Type,Date,Min)[source(driver)] <-
     .print("Motorista colocou a reserva disponivel").
-
-+reservationChoice(Choice) <- 
-    .print("Escolha de reserva: ", Choice);
-    if (Choice == "USAR") {
-        !useReservation;
-    } elif(Choice == "VENDER") {
-        !makeVacancyAvailable;
-    } else {
-        .print("Escolha invalida");
-    }.
 
 +!escolher : true <-
     .wait(estacionamentoAberto);
@@ -69,26 +48,6 @@
 	.wait(5000);
 	+Reply;
     !comecarNegociacao.
-
-+!comecarNegociacao[source(self)] : decisao(EscolhaDriver) & tipoVaga(Type) <-
-    consultPrice(Type);
-    ?precoTabela(Price);
-    ?dataUso(Data);
-    
-    .print("Tipo da vaga: ", Type);
-    .print("Preco da vaga (por hora): ", Price);
-    .print("Data de uso: ", Data);
-
-    if (EscolhaDriver == "COMPRA" | EscolhaDriver == "RESERVA") {
-        .send(manager, achieve, consultarVaga(Type, Data, EscolhaDriver));
-    } elif (EscolhaDriver == "COMPRARESERVA") {
-        !buyReservation(Type, Data);
-    } else {
-        .print("Escolha invalida");
-    }.
-
-+!comecarNegociacao : true <-
-    .print("Escolha de acao invalida").
 
 // ----------------- ACOES CARTEIRA -----------------
 
@@ -120,7 +79,27 @@
     .wait(5000);
     !pedirEmprestimo.
 
-// ----------------- PAGAMENTO E CONFIRMACAO -----------------
+// -------------------- CENARIOS --------------------
+// ----- USO -----
+
++vagaOcupada(Id)[source(manager)] <-
+    .print("Vaga ocupada");
+    ?tempoUso(Min);
+    .wait(Min*10);
+    !comprar.
+
++valorAPagarUso(Value)[source(manager)] <- !pagarUso(Value).
+
++!comecarNegociacao[source(self)] : decisao(EscolhaDriver) & tipoVaga(Tipo) 
+            & EscolhaDriver == "COMPRA" <-
+    consultPrice(Tipo);
+    ?precoTabela(Price);
+    ?dataUso(Data);
+    
+    .print("Tipo da vaga: ", Tipo);
+    .print("Preco da vaga (por hora): ", Price);
+    .print("Data de uso: ", Data);
+    .send(manager, achieve, consultarVaga(Tipo, Data, EscolhaDriver)).
 
 +!comprar : true <- 
     .print("Pagamento da vaga");
@@ -144,6 +123,38 @@
     .print("Pagamento realizado");
     .send(manager, achieve, validarPagamento(TransactionId, IdVaga, Valor)).
 
++!estacionar[source(self)] : tempoUso(Min) & idVaga(Id) <-
+    .print("--------------------------------------------------------------");
+    .print("Estacionando veiculo na vaga ", Id);
+    .send(manager, tell, querEstacionar(Id)).
+
+// ----- RESERVAR -----
+
++!comecarNegociacao[source(self)] : decisao(EscolhaDriver) & tipoVaga(Tipo)
+            & EscolhaDriver == "RESERVA" <-
+    ?dataUso(Data);
+
+    .print("Tipo da vaga: ", Tipo);
+    .print("Data de uso: ", Data);
+
+    !reservar(Tipo, Data).
+
++!reservar(Tipo, Data) : tempoUso(Min) & chainServer(Server)
+            & myWallet(Priv,Pub) & cryptocurrency(Coin) <- 
+    .print("Solicitando reserva...");
+    .send(manager, achieve, querReservar(Tipo, Data, Min)).
+
++reservationChoice(Choice) <- 
+    .print("Escolha de reserva: ", Choice);
+    if (Choice == "USAR") {
+        !useReservation;
+    } elif(Choice == "VENDER") {
+        !makeVacancyAvailable;
+    } else {
+        .print("Escolha invalida");
+    }.
+
+// ----- VALIDACAO -----
 +!stampProcess(TransactionId)[source(self)] : chainServer(Server)
             & myWallet(MyPriv,MyPub) <-
     .print("Validando transferencia...");
@@ -151,16 +162,10 @@
 
 // ----------------- ESTACIONAR E DEIXAR ESTACIONAMENTO -----------------
 
-+!estacionar[source(self)] : tempoUso(Min) & idVaga(Id) <-
-    .print("--------------------------------------------------------------");
-    .print("Estacionando veiculo na vaga ", Id);
-    .send(manager, tell, querEstacionar(Id)).
-
 +!estacionar[source(manager)] : tempoUso(Min) & idVaga(Id) <-
     .print("--------------------------------------------------------------");
     .print("Estacionando veiculo na vaga ", Id);
     +parked(Id);
-    // possibilidade de exceder o valor especificado pela reserva
     .wait(Min*10);
     !leave.
 

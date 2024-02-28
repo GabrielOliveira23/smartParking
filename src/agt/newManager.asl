@@ -10,7 +10,7 @@
 
 // ----------------------------- COMMONS ------------------------------
 
-+vagaDisponivel(Status) <- .send(driver, tell, vagaDisponivel(Status)).
++vagaDisponivelParaReserva(Status) <- .send(driver, tell, vagaDisponivelParaReserva(Status)).
 
 +idVaga(Id) <- .send(driver, tell, idVaga(Id)).
 
@@ -23,7 +23,7 @@
 	!listarVagas.
 
 +!abrirEstacionamento : listaVagas(Vagas) <-
-	.print("Abrindo estacionamento!");
+	.print("Estacionamento Aberto!");
 	.broadcast(tell, estacionamentoAberto).
 
 +!consultarVaga(TipoVaga, Data, Intencao)[source(driver)] : listaVagas(Vagas) <-
@@ -49,9 +49,9 @@
 
 // -------------------------- COMPRAR RESERVA -------------------------
 
-+!reservation(Id, Date, Minutes)[source(driver)] : true <-
++!querReservar(Tipo, Date, Minutes)[source(driver)] : listaVagas(Lista) <-
 	.print("Reservando vaga...");
-	bookVacancy(Id, Date, Minutes).
+	bookVacancy(Tipo, Lista, Date, Minutes).
 
 +!sendReservation(IdVaga, Value)[source(self)] : chainServer(Server) 
             & myWallet(MyPriv,MyPub) & driverWallet(DriverW) <-
@@ -109,26 +109,30 @@
 	.send(driver, achieve, sairEstacionamento).
 
 +!listarVagas: chainServer(Server) & myWallet(MyPriv,MyPub) <- 
+	Descricao1 = "tipoVaga:Curta;status:disponivel;assetId:";
 	.print("Listando vagas...");
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga1", "description:Curta;status:disponivel", account);
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga1", "", account);
 	.wait(account(Vaga1Id));
-	Descricao1 = "tipo:Curta;assetId:";
 	.concat(Descricao1, Vaga1Id, Vaga1);
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga2", "description:Longa;status:disponivel", account);
+
+	Descricao2 = "tipoVaga:Longa;status:disponivel;assetId:";
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga2", Descricao2, account);
 	.wait(account(Vaga2Id));
-	Descricao2 = "tipo:Longa;assetId:";
 	.concat(Descricao2, Vaga2Id, Vaga2);
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga3", "description:Longa;status:disponivel", account);
+
+	Descricao3 = "tipoVaga:Longa;status:disponivel;assetId:";
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga3", Descricao3, account);
 	.wait(account(Vaga3Id));
-	Descricao3 = "tipo:Longa;assetId:";
 	.concat(Descricao3, Vaga3Id, Vaga3);
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga4", "description:CurtaCoberta;status:disponivel", account);
+
+	Descricao4 = "tipoVaga:CurtaCoberta;status:disponivel;assetId:";
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga4", Descricao4, account);
 	.wait(account(Vaga4Id));
-	Descricao4 = "tipo:CurtaCoberta;assetId:";
 	.concat(Descricao4, Vaga4Id, Vaga4);
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga5", "description:LongaCoberta;status:disponivel", account);
+
+	Descricao5 = "tipoVaga:LongaCoberta;status:disponivel;assetId:";
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga5", Descricao5, account);
 	.wait(account(Vaga5Id));
-	Descricao5 = "tipo:LongaCoberta;assetId:";
 	.concat(Descricao5, Vaga5Id, Vaga5);
 	Lista = [Vaga1, Vaga2, Vaga3, Vaga4, Vaga5];
 	+listaVagas(Lista);

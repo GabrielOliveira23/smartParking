@@ -1,16 +1,19 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class NewVaga {
+public class Vaga {
     private String id;
     private TipoVagaEnum tipoVaga;
     private boolean disponivel;
     private List<String> reservas;
 
-    public NewVaga(String id, TipoVagaEnum tipoVaga) {
+    public Vaga(String id, TipoVagaEnum tipoVaga, String status) {
         this.id = id;
         this.tipoVaga = tipoVaga;
-        this.disponivel = true;
+        if(status.equals("disponivel"))
+            this.disponivel = true;
+        else
+            this.disponivel = false;
         reservas = new ArrayList<String>();
     }
 
