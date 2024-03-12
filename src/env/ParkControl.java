@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 import cartago.*;
 
 public class ParkControl extends Artifact {
@@ -9,11 +11,59 @@ public class ParkControl extends Artifact {
         return new Vaga(idVaga, TipoVagaEnum.setTipoVaga(tipoVaga), status);
     }
 
+    static KeyValueObject extractData(Object[] field) {
+        String key = field[0].toString();
+        String value = field[1].toString();
+        return new KeyValueObject(key, value);
+    }
+
+    @OPERATION
+    void tratarListaVagas(String type, String date, String driverIntention, Object[] metaDataList) {
+        NewVaga vaga = new NewVaga("", "");
+        for (Object metaData : metaDataList) {
+            KeyValueObject object = extractData((Object[]) metaData);
+            if (object.getKey().equals("status") && object.getValue().equals("disponivel")) {
+                vaga.setStatus(object.getValue());
+            } else if (object.getKey().equals("tipoVaga") && object.getValue().equals(type)) {
+                vaga.setTipoVaga(object.getValue());
+            }
+        }
+        if (vaga.getStatus().equals("")) {
+            vaga.setStatus("disponivel");
+        }
+        switch (driverIntention) {
+            case "COMPRA": {
+                if (vaga.getStatus().equals("disponivel")) {
+                    defineObsProperty("vagaDisponivel", true);
+                    defineObsProperty("tipoVaga", vaga.getTipoVaga());
+                } else {
+                    defineObsProperty("vagaDisponivel", false);
+                }
+                break;
+            }
+            case "RESERVA": {
+                // if (vaga.getStatus().equals("disponivel")) {
+                // defineObsProperty("vagaDisponivel", true);
+                // defineObsProperty("tipoVaga", vaga.getTipoVaga());
+                // defineObsProperty("dataUso", data);
+                // } else {
+                // defineObsProperty("vagaDisponivel", false);
+                // }
+                // break;
+            }
+            default: {
+                log("Intenção não reconhecida");
+                break;
+            }
+        }
+    }
+
     @OPERATION
     void verificarVaga(Object[] listaVagas, String tipoDesejado, String data, String intencaoDriver) {
         switch (intencaoDriver) {
             case "COMPRA": {
                 for (Object vagaObj : listaVagas) {
+                    System.out.println(vagaObj.toString());
                     Vaga vaga = getVagaFromBelief(vagaObj.toString());
                     if (vaga.getTipoVaga().equals(tipoDesejado.toUpperCase())) {
                         if (vaga.isDisponivel()) {

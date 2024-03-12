@@ -2,6 +2,7 @@
 { include("$jacamo/templates/common-moise.asl") }
 
 /* Initial beliefs */
++listaVagas([ ]).
 
 /* Initial goals */
 !criarCarteira.
@@ -14,28 +15,48 @@
 
 +idVaga(Id) <- .send(driver, tell, idVaga(Id)).
 
-+!criarCarteira <-
-	.print("Criando carteira digital!");
-	velluscinum.buildWallet(myWallet);
-	.wait(myWallet(Priv,Pub));
-	+managerWallet(Pub);
-	.wait(5000);
-	!listarVagas.
-
-+!abrirEstacionamento : listaVagas(Vagas) <-
-	.print("Estacionamento Aberto!");
-	.broadcast(tell, estacionamentoAberto).
-
-+!consultarVaga(TipoVaga, Data, Intencao)[source(driver)] : listaVagas(Vagas) <-
++!consultarVaga(TipoVaga, Data, Intencao)[source(driver)]: listaVagas(Lista) <-
 	.send(driver, askOne, driverWallet(DriverW), Reply);
-	.wait(5000);
+	.wait(3000);
 	+Reply;
 	+driverIntention(Intencao);
-	verificarVaga(Vagas, TipoVaga, Data, Intencao).
+	!verificarDisponibilidade(TipoVaga, Data, Intencao, set(Lista)).
+	// verificarVaga(Vagas, TipoVaga, Data, Intencao).
 	// se a intencao for reservar fazer a condicao para isso
 
 +!consultarVaga(TipoVaga, Data, Intencao)[source(driver)] : not listaVagas(Vagas) <-
 	.print("Estacionamento fechado!").
+
++!verificarDisponibilidade(TipoVaga, Data, Intencao, set([Head|Tail])): chainServer(Server) <-
+	.print("Verificando disponibilidade...");
+	.print("Vaga -> ", Head);
+	velluscinum.tokenInfo(Server, Head, metadata, content);
+	.wait(content(Metadata));
+	.print("Metadata -> ", Metadata);
+	tratarListaVagas(TipoVaga, Data, Intencao, Metadata).
+	// !findVacancy(TipoVaga,set(Metadata));
+	// !verificarDisponibilidade(TipoVaga, Data, Intencao, set(Tail)).
+
+-!verificarDisponibilidade(TipoVaga, Data, Intencao, set([ ])) <-
+	.print("percorreu todas as vagas").
+
++!findVacancy(Wanted,set([Head|Tail])) <-
+    !compareData(Wanted,"tipoVaga",Head,set(Tail));
+    !findVacancy(Wanted,"tipoVaga",set(Tail)).
+
++!compareData(Wanted,Field,[Key,Value],set(V)): (Field  == Key) | (Field == "*") <- 
+    .print("key: ", Key, "     value: ", Value);
+	if (Wanted == Value) {
+		+vagaDisponivel(Value);
+	}.
+
+-!compareData(Wanted,Field,[Key,Value],set(V)) <- .print("The Key ",Key, " is not a ",Field).
+
+-!findVacancy(Wanted,set([   ])) <- .print("End of List.").
+
++vagaDisponivel(Id, Status) <- // drop plano de procurar
+	.send(driver, tell, idVaga(Id)).
+	.send(driver, tell, vagaDisponivel(Status)).
 
 // -------------------------- COMPRA DIRETA ---------------------------
 
@@ -108,36 +129,75 @@
 	.print("Vaga Liberada");
 	.send(driver, achieve, sairEstacionamento).
 
-+!listarVagas: chainServer(Server) & myWallet(MyPriv,MyPub) <- 
-	Descricao1 = "tipoVaga:Curta;status:disponivel;assetId:";
-	.print("Listando vagas...");
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga1", "", account);
-	.wait(account(Vaga1Id));
-	.concat(Descricao1, Vaga1Id, Vaga1);
+// -------------------------- ANTES DE ABRIR --------------------------
 
-	Descricao2 = "tipoVaga:Longa;status:disponivel;assetId:";
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga2", Descricao2, account);
-	.wait(account(Vaga2Id));
-	.concat(Descricao2, Vaga2Id, Vaga2);
++vaga(Vaga): listaVagas(Lista) & not .empty(Lista) <- 
+	-+listaVagas([Vaga|Lista]).
 
-	Descricao3 = "tipoVaga:Longa;status:disponivel;assetId:";
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga3", Descricao3, account);
-	.wait(account(Vaga3Id));
-	.concat(Descricao3, Vaga3Id, Vaga3);
++vaga(Vaga) <- -+listaVagas([Vaga]).
 
-	Descricao4 = "tipoVaga:CurtaCoberta;status:disponivel;assetId:";
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga4", Descricao4, account);
-	.wait(account(Vaga4Id));
-	.concat(Descricao4, Vaga4Id, Vaga4);
++!criarCarteira <-
+	.print("Obtendo carteira digital!");
+	velluscinum.loadWallet(myWallet);
+	.wait(myWallet(Priv,Pub));
+	+managerWallet(Pub);
+	.wait(5000);
+	!verificarListaVagas.
 
-	Descricao5 = "tipoVaga:LongaCoberta;status:disponivel;assetId:";
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga5", Descricao5, account);
-	.wait(account(Vaga5Id));
-	.concat(Descricao5, Vaga5Id, Vaga5);
-	Lista = [Vaga1, Vaga2, Vaga3, Vaga4, Vaga5];
-	+listaVagas(Lista);
++!verificarListaVagas: chainServer(Server) & myWallet(MyPriv,MyPub) <-
+	.print("Verificando lista de vagas...");
+	velluscinum.walletContent(Server, MyPriv, MyPub, content);
+	.wait(content(Content));
+	!findToken(nft, set(Content));
 	!abrirEstacionamento.
 
--!listarVagas <-
++!verificarListaVagas: not chainServer(Server) <-
 	.wait(5000);
+	!verificarListaVagas.
+
++!abrirEstacionamento : listaVagas(Vagas) <-
+	.print("Estacionamento Aberto!");
+	.broadcast(tell, estacionamentoAberto).
+
++!listarVagas: chainServer(Server) & myWallet(MyPriv,MyPub) <- 
+	.print("Listando vagas...");
+
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga1", "tipo:Curta", account);
+	.wait(account(Vaga1Id));
+
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga2", "tipo:Longa", account);
+	.wait(account(Vaga2Id));
+
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga3", "tipo:Longa", account);
+	.wait(account(Vaga3Id));
+
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga4", "tipo:CurtaCoberta", account);
+	.wait(account(Vaga4Id));
+
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga5", "tipo:LongaCoberta", account);
+	.wait(account(Vaga5Id));
+
+	Lista = [Vaga1Id, Vaga2Id, Vaga3Id, Vaga4Id, Vaga5Id];
+	-+listaVagas(Lista);
+	!abrirEstacionamento.
+
++!findToken(Term,set([Head|Tail])) <- 
+    !compare(Term,Head,set(Tail));
+    !findToken(Term,set(Tail)).
+
++!compare(Term,[Type,AssetID, Qtd],set(V)): (Term  == Type) | (Term == AssetID) <-
+	.print("Vaga: ", AssetID);
+	+vaga(AssetID).
+
+-!compare(Term,[Type,AssetID,Qtd],set(V)) <- .print("The Asset ",AssetID, " is not a ",Term).
+
+-!findToken(Type,set([   ])): not vaga(Vaga) <- 
+	.print("Lista de vagas nao encontrada");
 	!listarVagas.
+
+-!findToken(Type,set([   ])): vaga(Vaga) <- 
+	.print("Vagas ja cadastradas").
+
+// +!setarVagaDisponivel(AssetID): chainServer(Server) & myWallet(PrK, PuK) <-
+// 	velluscinum.transferNFT(Server, PrK, PuK, AssetID, PuK, "status:disponivel", transfer);
+// 	.wait(transfer(TransferId)).

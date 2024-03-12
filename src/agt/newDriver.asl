@@ -26,7 +26,7 @@
         .print("Escolha invalida");
     }.
 
-+vagaDisponivelParaReserva(Status) : X == false <-
++vagaDisponivelParaReserva(Status) : Status == false <-
     .print("Vaga indisponivel").
 
 +reservationNFT(AssetId, TransactionId)[source(manager)] <- 
@@ -43,7 +43,7 @@
     defineChoice;
     .print("Criando conta bancaria");
     !criarCarteira;
-	!pedirEmprestimo;
+    !obterConteudoCarteira;
 	.send(manager,askOne,managerWallet(Manager),Reply);
 	.wait(5000);
 	+Reply;
@@ -52,27 +52,55 @@
 // ----------------- ACOES CARTEIRA -----------------
 
 +!criarCarteira : true <-
-    .print("Criando carteira...");
-    velluscinum.buildWallet(myWallet);
-	.wait(myWallet(MyPriv,MyPub));
-    +driverWallet(MyPub).
+    .print("Obtendo carteira...");
+    velluscinum.loadWallet(myWallet);
+	.wait(myWallet(PrK,PuK));
+    +driverWallet(PuK).
+
++!obterConteudoCarteira : chainServer(Server) & myWallet(PrK, PuK)
+            & cryptocurrency(Coin) <-
+    .print("Obtendo conteudo da carteira...");
+    velluscinum.walletContent(Server, PrK, PuK, content);
+    .wait(content(Content));
+    !findToken(Coin, set(Content)).
+
++!findToken(Term,set([Head|Tail])) <- 
+    !compare(Term,Head,set(Tail));
+    !findToken(Term,set(Tail)).
+
++!compare(Term,[Type,AssetID, Qtd],set(V)): (Term  == Type) | (Term == AssetID) <- 
+    .print("Type: ", Type, " ID: ", AssetID," Qtd: ", Qtd);
+	+coinBalance(Qtd).
+
+-!compare(Term,[Type,AssetID,Qtd],set(V)) <- .print("The Asset ",AssetID, " is not a ",Term).
+
+-!findToken(Type,set([   ])): not coinBalance(Amount) <- 
+	.print("Moeda Nao encontrada");
+    !pedirEmprestimo.
+
+-!findToken(Type,set([   ])): coinBalance(Amount) <- 
+	.print("Saldo atual: ", Amount).
+	
++!criarMoeda: chainServer(Server) & myWallet(PrK, PuK) <- 
+	.print("Criando moeda");
+	velluscinum.deployToken(Server, PrK, PuK, "name:smartCoin", 200, smartCoin);
+	.wait(smartCoin(Coin)).
+
 
 +!pedirEmprestimo : cryptocurrency(Coin) & bankWallet(BankW) 
             & chainServer(Server) 
-            & myWallet(MyPriv,MyPub) <-
+            & myWallet(PrK,PuK) <-
 	.print("Pedindo emprestimo...");
-	velluscinum.deployNFT(Server,MyPriv,MyPub,
-				"name:motorista;address:5362fe5e-aaf1-43e6-9643-7ab094836ff4",
-				"description:Createing Bank Account",
-				account);
-				
+	velluscinum.deployNFT(Server,PrK,PuK, "name:motorista",
+                "description:Createing Bank Account", account);
 	.wait(account(AssetID));
-	velluscinum.transferNFT(Server,MyPriv,MyPub,AssetID,BankW,
-				 "description:requesting lend;value_chainCoin:100",requestID);
+
+	velluscinum.transferNFT(Server,PrK,PuK,AssetID,BankW,
+				"description:requesting lend;value_chainCoin:100",requestID);
 	.wait(requestID(PP));
 	
 	.print("Lend Contract nr:",PP);
-	.send(bank, achieve, lending(PP,MyPub,100)).
+	.send(bank, achieve, lending(PP,PuK,100)).
 
 +!pedirEmprestimo : true <-
     .print("Erro ao pedir emprestimo");
@@ -99,6 +127,7 @@
     .print("Tipo da vaga: ", Tipo);
     .print("Preco da vaga (por hora): ", Price);
     .print("Data de uso: ", Data);
+    .print("Consultando vaga...");
     .send(manager, achieve, consultarVaga(Tipo, Data, EscolhaDriver)).
 
 +!comprar : true <- 
@@ -114,11 +143,11 @@
     !pagarUso(Valor).
 
 +!pagarUso(Valor) : bankAccount(ok)[source(bank)] & cryptocurrency(Coin)
-            & chainServer(Server) & myWallet(MyPriv,MyPub)
+            & chainServer(Server) & myWallet(PrK,PuK)
             & managerWallet(Manager) <-
     .print("Pagamento em andamento...");
     ?idVaga(IdVaga);
-    velluscinum.transferToken(Server,MyPriv,MyPub,Coin,Manager,Valor,payment);
+    velluscinum.transferToken(Server,PrK,PuK,Coin,Manager,Valor,payment);
     .wait(payment(TransactionId));
     .print("Pagamento realizado");
     .send(manager, achieve, validarPagamento(TransactionId, IdVaga, Valor)).
@@ -156,9 +185,9 @@
 
 // ----- VALIDACAO -----
 +!stampProcess(TransactionId)[source(self)] : chainServer(Server)
-            & myWallet(MyPriv,MyPub) <-
+            & myWallet(PrK,PuK) <-
     .print("Validando transferencia...");
-    velluscinum.stampTransaction(Server, MyPriv, MyPub, TransactionId).
+    velluscinum.stampTransaction(Server, PrK, PuK, TransactionId).
 
 // ----------------- ESTACIONAR E DEIXAR ESTACIONAMENTO -----------------
 
