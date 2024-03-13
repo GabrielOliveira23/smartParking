@@ -11,7 +11,7 @@
 
 // ----------------------------- COMMONS ------------------------------
 
-+vagaDisponivelParaReserva(Status) <- .send(driver, tell, vagaDisponivelParaReserva(Status)).
++vagaDisponivel(Status) <- .send(driver, tell, vagaDisponivel(Status)).
 
 +idVaga(Id) <- .send(driver, tell, idVaga(Id)).
 
@@ -21,38 +21,39 @@
 	+Reply;
 	+driverIntention(Intencao);
 	!verificarDisponibilidade(TipoVaga, Data, Intencao, set(Lista)).
-	// verificarVaga(Vagas, TipoVaga, Data, Intencao).
-	// se a intencao for reservar fazer a condicao para isso
 
 +!consultarVaga(TipoVaga, Data, Intencao)[source(driver)] : not listaVagas(Vagas) <-
 	.print("Estacionamento fechado!").
 
-+!verificarDisponibilidade(TipoVaga, Data, Intencao, set([Head|Tail])): chainServer(Server) <-
++!verificarDisponibilidade(TipoVaga, Data, Intencao, set([Head|Tail])): chainServer(Server) & not vagaDisponivel(X) <-
 	.print("Verificando disponibilidade...");
 	.print("Vaga -> ", Head);
 	velluscinum.tokenInfo(Server, Head, metadata, content);
 	.wait(content(Metadata));
 	.print("Metadata -> ", Metadata);
-	tratarListaVagas(TipoVaga, Data, Intencao, Metadata).
-	// !findVacancy(TipoVaga,set(Metadata));
-	// !verificarDisponibilidade(TipoVaga, Data, Intencao, set(Tail)).
+	tratarListaVagas(TipoVaga, Data, Intencao, Metadata);
+	?vagaDisponivel(X);
+	+idVaga(Head).
+
+-!verificarDisponibilidade(TipoVaga, Data, Intencao, set([Head|Tail])): chainServer(Server) <-
+	!verificarDisponibilidade(TipoVaga, Data, Intencao, set(Tail)).
 
 -!verificarDisponibilidade(TipoVaga, Data, Intencao, set([ ])) <-
 	.print("percorreu todas as vagas").
 
-+!findVacancy(Wanted,set([Head|Tail])) <-
-    !compareData(Wanted,"tipoVaga",Head,set(Tail));
-    !findVacancy(Wanted,"tipoVaga",set(Tail)).
+// +!findVacancy(Wanted,set([Head|Tail])) <-
+//     !compareData(Wanted,"tipoVaga",Head,set(Tail));
+//     !findVacancy(Wanted,"tipoVaga",set(Tail)).
 
-+!compareData(Wanted,Field,[Key,Value],set(V)): (Field  == Key) | (Field == "*") <- 
-    .print("key: ", Key, "     value: ", Value);
-	if (Wanted == Value) {
-		+vagaDisponivel(Value);
-	}.
+// +!compareData(Wanted,Field,[Key,Value],set(V)): (Field  == Key) | (Field == "*") <- 
+//     .print("key: ", Key, "     value: ", Value);
+// 	if (Wanted == Value) {
+// 		+vagaDisponivel(Value);
+// 	}.
 
--!compareData(Wanted,Field,[Key,Value],set(V)) <- .print("The Key ",Key, " is not a ",Field).
+// -!compareData(Wanted,Field,[Key,Value],set(V)) <- .print("The Key ",Key, " is not a ",Field).
 
--!findVacancy(Wanted,set([   ])) <- .print("End of List.").
+// -!findVacancy(Wanted,set([   ])) <- .print("End of List.").
 
 +vagaDisponivel(Id, Status) <- // drop plano de procurar
 	.send(driver, tell, idVaga(Id)).

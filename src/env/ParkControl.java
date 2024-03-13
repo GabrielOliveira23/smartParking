@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-
 import cartago.*;
 
 public class ParkControl extends Artifact {
@@ -24,7 +22,7 @@ public class ParkControl extends Artifact {
             KeyValueObject object = extractData((Object[]) metaData);
             if (object.getKey().equals("status") && object.getValue().equals("disponivel")) {
                 vaga.setStatus(object.getValue());
-            } else if (object.getKey().equals("tipoVaga") && object.getValue().equals(type)) {
+            } else if (object.getKey().equals("tipo") && object.getValue().equals(type)) {
                 vaga.setTipoVaga(object.getValue());
             }
         }
@@ -33,7 +31,8 @@ public class ParkControl extends Artifact {
         }
         switch (driverIntention) {
             case "COMPRA": {
-                if (vaga.getStatus().equals("disponivel")) {
+                if (vaga.getStatus().equals("disponivel") && vaga.getTipoVaga().equals(type)) {
+                    System.out.println("Vaga disponível: " + vaga.getTipoVaga());
                     defineObsProperty("vagaDisponivel", true);
                     defineObsProperty("tipoVaga", vaga.getTipoVaga());
                 } else {

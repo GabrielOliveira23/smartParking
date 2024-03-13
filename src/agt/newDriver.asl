@@ -10,9 +10,7 @@
 
 +decisao(X) : true <- .print("Escolha: ", X).
 
-+vagaDisponivel(X)[source(self)] <- .print("Vaga disponivel: ", X).
-
-+vagaDisponivelParaReserva(X)[source(manager)] : X == true <-
++vagaDisponivel(Status)[source(manager)] : Status == true <-
     .wait(3000);
     ?tipoVaga(Tipo);
     ?decisao(Choice);
@@ -26,7 +24,7 @@
         .print("Escolha invalida");
     }.
 
-+vagaDisponivelParaReserva(Status) : Status == false <-
++vagaDisponivel(Status) : Status == false <-
     .print("Vaga indisponivel").
 
 +reservationNFT(AssetId, TransactionId)[source(manager)] <- 
