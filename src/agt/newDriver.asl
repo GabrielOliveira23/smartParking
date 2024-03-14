@@ -128,21 +128,20 @@
     .print("Consultando vaga...");
     .send(manager, achieve, consultarVaga(Tipo, Data, EscolhaDriver)).
 
-+!comprar : true <- 
++!comprar <- 
     .print("Pagamento da vaga");
     ?tempoUso(Minutes);
     ?tipoVaga(Tipo);
     .send(manager, achieve, pagamentoUsoVaga(Tipo, Minutes)).
 
-+!pagarUso(Valor) : not managerWallet(Manager) <-
++!pagarUso(Valor): not managerWallet(Manager) <-
     .wait(5000);
     .send(manager,askOne,managerWallet(Manager),Reply);
     +Reply;
     !pagarUso(Valor).
 
-+!pagarUso(Valor) : bankAccount(ok)[source(bank)] & cryptocurrency(Coin)
-            & chainServer(Server) & myWallet(PrK,PuK)
-            & managerWallet(Manager) <-
++!pagarUso(Valor) : cryptocurrency(Coin) & chainServer(Server)
+            & myWallet(PrK,PuK) & managerWallet(Manager) <-
     .print("Pagamento em andamento...");
     ?idVaga(IdVaga);
     velluscinum.transferToken(Server,PrK,PuK,Coin,Manager,Valor,payment);

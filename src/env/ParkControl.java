@@ -16,7 +16,7 @@ public class ParkControl extends Artifact {
     }
 
     @OPERATION
-    void tratarListaVagas(String type, String date, String driverIntention, Object[] metaDataList) {
+    void verificarVaga(String type, String date, String driverIntention, Object[] metaDataList) {
         NewVaga vaga = new NewVaga("", "");
         for (Object metaData : metaDataList) {
             KeyValueObject object = extractData((Object[]) metaData);
@@ -35,8 +35,6 @@ public class ParkControl extends Artifact {
                     System.out.println("Vaga disponível: " + vaga.getTipoVaga());
                     defineObsProperty("vagaDisponivel", true);
                     defineObsProperty("tipoVaga", vaga.getTipoVaga());
-                } else {
-                    defineObsProperty("vagaDisponivel", false);
                 }
                 break;
             }
@@ -58,7 +56,15 @@ public class ParkControl extends Artifact {
     }
 
     @OPERATION
-    void verificarVaga(Object[] listaVagas, String tipoDesejado, String data, String intencaoDriver) {
+    void calcularValorAPagarUso(String tipoVaga, int minutos) {
+        double preco = ParkPricing.getPreco(TipoVagaEnum.setTipoVaga(tipoVaga));
+        log("Preço da tabela: " + preco);
+        preco = Math.round(preco * ((double) minutos / 60));
+        defineObsProperty("valorAPagarUso", preco);
+    }
+
+    @OPERATION
+    void verificarVagaAntigo(Object[] listaVagas, String tipoDesejado, String data, String intencaoDriver) {
         switch (intencaoDriver) {
             case "COMPRA": {
                 for (Object vagaObj : listaVagas) {
@@ -107,14 +113,6 @@ public class ParkControl extends Artifact {
                 break;
             }
         }
-    }
-
-    @OPERATION
-    void calcularValorAPagarUso(String tipoVaga, int minutos) {
-        double preco = ParkPricing.getPreco(TipoVagaEnum.setTipoVaga(tipoVaga));
-        log("Preço da tabela: " + preco);
-        preco = Math.round(preco * ((double) minutos / 60));
-        defineObsProperty("valorAPagarUso", preco);
     }
 
     @OPERATION

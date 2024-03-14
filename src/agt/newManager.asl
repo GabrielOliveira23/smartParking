@@ -28,10 +28,10 @@
 +!verificarDisponibilidade(TipoVaga, Data, Intencao, set([Head|Tail])): chainServer(Server) & not vagaDisponivel(X) <-
 	.print("Verificando disponibilidade...");
 	.print("Vaga -> ", Head);
-	velluscinum.tokenInfo(Server, Head, metadata, content);
+	velluscinum.tokenInfo(Server, Head, all, content);
 	.wait(content(Metadata));
 	.print("Metadata -> ", Metadata);
-	tratarListaVagas(TipoVaga, Data, Intencao, Metadata);
+	verificarVaga(TipoVaga, Data, Intencao, Metadata);
 	?vagaDisponivel(X);
 	+idVaga(Head).
 
@@ -39,25 +39,8 @@
 	!verificarDisponibilidade(TipoVaga, Data, Intencao, set(Tail)).
 
 -!verificarDisponibilidade(TipoVaga, Data, Intencao, set([ ])) <-
+	+vagaDisponivel(false);
 	.print("percorreu todas as vagas").
-
-// +!findVacancy(Wanted,set([Head|Tail])) <-
-//     !compareData(Wanted,"tipoVaga",Head,set(Tail));
-//     !findVacancy(Wanted,"tipoVaga",set(Tail)).
-
-// +!compareData(Wanted,Field,[Key,Value],set(V)): (Field  == Key) | (Field == "*") <- 
-//     .print("key: ", Key, "     value: ", Value);
-// 	if (Wanted == Value) {
-// 		+vagaDisponivel(Value);
-// 	}.
-
-// -!compareData(Wanted,Field,[Key,Value],set(V)) <- .print("The Key ",Key, " is not a ",Field).
-
-// -!findVacancy(Wanted,set([   ])) <- .print("End of List.").
-
-+vagaDisponivel(Id, Status) <- // drop plano de procurar
-	.send(driver, tell, idVaga(Id)).
-	.send(driver, tell, vagaDisponivel(Status)).
 
 // -------------------------- COMPRA DIRETA ---------------------------
 
@@ -116,17 +99,19 @@
 +!ocuparVaga(Id): chainServer(Server) & myWallet(Priv,Pub) <-
 	.print("Ocupando Vaga...");
 	.print("Id -> ", Id);
-	velluscinum.transferNFT(Server, Priv, Pub, Id, Pub, "status:ocupado", requestID);
+	?tipoVaga(Tipo);
+	.concat("status:ocupado;tipo:", Tipo, Metadata);
+	velluscinum.transferNFT(Server, Priv, Pub, Id, Pub, Metadata, requestID);
 	.wait(requestID(TransferId));
-	// !stampProcess(TransferId);
 	.send(driver, tell, vagaOcupada(Id)).
 
 +!liberarVaga(Id): chainServer(Server) & myWallet(Priv,Pub) <-
 	.print("Liberando Vaga...");
 	.print("Id -> ", Id);
-	velluscinum.transferNFT(Server, Priv, Pub, Id, Pub, "status:disponivel", requestID);
+	?tipoVaga(Tipo);
+	.concat("status:disponivel;tipo:", Tipo, Metadata);
+	velluscinum.transferNFT(Server, Priv, Pub, Id, Pub, Metadata, requestID);
 	.wait(requestID(TransferId));
-	// !stampProcess(TransferId);
 	.print("Vaga Liberada");
 	.send(driver, achieve, sairEstacionamento).
 
@@ -163,19 +148,19 @@
 +!listarVagas: chainServer(Server) & myWallet(MyPriv,MyPub) <- 
 	.print("Listando vagas...");
 
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga1", "tipo:Curta", account);
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga1", "status:disponivel;tipo:Curta", account);
 	.wait(account(Vaga1Id));
 
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga2", "tipo:Longa", account);
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga2", "status:disponivel;tipo:Longa", account);
 	.wait(account(Vaga2Id));
 
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga3", "tipo:Longa", account);
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga3", "status:disponivel;tipo:Longa", account);
 	.wait(account(Vaga3Id));
 
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga4", "tipo:CurtaCoberta", account);
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga4", "status:disponivel;tipo:CurtaCoberta", account);
 	.wait(account(Vaga4Id));
 
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga5", "tipo:LongaCoberta", account);
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga5", "status:disponivel;tipo:LongaCoberta", account);
 	.wait(account(Vaga5Id));
 
 	Lista = [Vaga1Id, Vaga2Id, Vaga3Id, Vaga4Id, Vaga5Id];
@@ -199,6 +184,3 @@
 -!findToken(Type,set([   ])): vaga(Vaga) <- 
 	.print("Vagas ja cadastradas").
 
-// +!setarVagaDisponivel(AssetID): chainServer(Server) & myWallet(PrK, PuK) <-
-// 	velluscinum.transferNFT(Server, PrK, PuK, AssetID, PuK, "status:disponivel", transfer);
-// 	.wait(transfer(TransferId)).
