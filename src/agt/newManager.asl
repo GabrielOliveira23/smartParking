@@ -99,18 +99,14 @@
 +!ocuparVaga(Id): chainServer(Server) & myWallet(Priv,Pub) <-
 	.print("Ocupando Vaga...");
 	.print("Id -> ", Id);
-	?tipoVaga(Tipo);
-	.concat("status:ocupado;tipo:", Tipo, Metadata);
-	velluscinum.transferNFT(Server, Priv, Pub, Id, Pub, Metadata, requestID);
+	velluscinum.transferNFT(Server, Priv, Pub, Id, Pub, "status:ocupado", requestID);
 	.wait(requestID(TransferId));
 	.send(driver, tell, vagaOcupada(Id)).
 
 +!liberarVaga(Id): chainServer(Server) & myWallet(Priv,Pub) <-
 	.print("Liberando Vaga...");
 	.print("Id -> ", Id);
-	?tipoVaga(Tipo);
-	.concat("status:disponivel;tipo:", Tipo, Metadata);
-	velluscinum.transferNFT(Server, Priv, Pub, Id, Pub, Metadata, requestID);
+	velluscinum.transferNFT(Server, Priv, Pub, Id, Pub, "status:disponivel", requestID);
 	.wait(requestID(TransferId));
 	.print("Vaga Liberada");
 	.send(driver, achieve, sairEstacionamento).
@@ -148,19 +144,19 @@
 +!listarVagas: chainServer(Server) & myWallet(MyPriv,MyPub) <- 
 	.print("Listando vagas...");
 
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga1", "status:disponivel;tipo:Curta", account);
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga1;tipo:Curta", "status:disponivel", account);
 	.wait(account(Vaga1Id));
 
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga2", "status:disponivel;tipo:Longa", account);
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga2;tipo:Longa", "status:disponivel", account);
 	.wait(account(Vaga2Id));
 
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga3", "status:disponivel;tipo:Longa", account);
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga3;tipo:Longa", "status:disponivel", account);
 	.wait(account(Vaga3Id));
 
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga4", "status:disponivel;tipo:CurtaCoberta", account);
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga4;tipo:CurtaCoberta", "status:disponivel", account);
 	.wait(account(Vaga4Id));
 
-	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga5", "status:disponivel;tipo:LongaCoberta", account);
+	velluscinum.deployNFT(Server, MyPriv, MyPub, "name:Vaga5;tipo:LongaCoberta", "status:disponivel", account);
 	.wait(account(Vaga5Id));
 
 	Lista = [Vaga1Id, Vaga2Id, Vaga3Id, Vaga4Id, Vaga5Id];
