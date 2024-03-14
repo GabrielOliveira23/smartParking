@@ -25,8 +25,8 @@ chainServer("http://testchain.chon.group:9984/").
 
 +!compare(Term,[Type,AssetID, Qtd],set(V)): (Term  == Type) | (Term == AssetID) <- 
     .print("Type: ", Type, " ID: ", AssetID," Qtd: ", Qtd);
-	+smartCoin(AssetID);
-	+smartCoinBalance(Qtd).
+	-+coinBalance(Qtd);
+	+smartCoin(AssetID).
 
 -!compare(Term,[Type,AssetID,Qtd],set(V)) <- .print("The Asset ",AssetID, " is not a ",Term).
 
@@ -39,11 +39,12 @@ chainServer("http://testchain.chon.group:9984/").
 	
 +!criarMoeda: chainServer(Server) & myWallet(PrK, PuK) <- 
 	.print("Criando moeda");
-	velluscinum.deployToken(Server, PrK, PuK, "name:smartCoin", 200, smartCoin);
+	velluscinum.deployToken(Server, PrK, PuK, "name:smartCoin", 300, smartCoin);
+	+coinBalance(300);
 	.wait(smartCoin(Coin)).
 
-+!lending(ResquestNumber,ClientWallet,Value)[source(Client)]: 
-			smartCoin(Coin) & smartCoinBalance(Amount) & myWallet(PrK,PuK) & chainServer(Server) <-
++!lending(ResquestNumber, ClientWallet, Value)[source(Client)]: 
+			smartCoin(Coin) & coinBalance(Amount) & myWallet(PrK,PuK) & chainServer(Server) <-
 	.print("Olá agente ",Client,", Bem vindo ao SmartBank! - Por favor espere enquanto validamos a transferência.");
 	velluscinum.stampTransaction(Server,PrK,PuK,ResquestNumber,loan(Client));
 	if (Amount >= Value) {

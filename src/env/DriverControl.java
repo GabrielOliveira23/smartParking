@@ -4,6 +4,19 @@ import java.util.Random;
 
 public class DriverControl extends Artifact {
     // private Proposta proposta = new Proposta();
+    @OPERATION
+    void emprestimoCount() {
+        ObsProperty emprestimoNum = getObsProperty("emprestimoNum");
+        if (emprestimoNum != null) {
+            int count = emprestimoNum.intValue();
+            count++;
+            log("Emprestimo num: " + count);
+            defineObsProperty("emprestimoNum", count);
+        } else {
+            log("Emprestimo num: 0");
+            defineObsProperty("emprestimoNum", 0);
+        }
+    }
 
     @OPERATION
     void defineChoice() {

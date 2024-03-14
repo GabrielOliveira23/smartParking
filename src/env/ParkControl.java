@@ -60,6 +60,7 @@ public class ParkControl extends Artifact {
         double preco = ParkPricing.getPreco(TipoVagaEnum.setTipoVaga(tipoVaga));
         log("Preço da tabela: " + preco);
         preco = Math.round(preco * ((double) minutos / 60));
+        log("Valor a pagar: " + preco);
         defineObsProperty("valorAPagarUso", preco);
     }
 

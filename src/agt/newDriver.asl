@@ -42,6 +42,7 @@
     .print("Criando conta bancaria");
     !criarCarteira;
     !obterConteudoCarteira;
+    .wait(coinBalance(Balance));
 	.send(manager,askOne,managerWallet(Manager),Reply);
 	.wait(5000);
 	+Reply;
@@ -49,7 +50,7 @@
 
 // ----------------- ACOES CARTEIRA -----------------
 
-+!criarCarteira : true <-
++!criarCarteira : not myWallet(PrK,PuK) <-
     .print("Obtendo carteira...");
     velluscinum.loadWallet(myWallet);
 	.wait(myWallet(PrK,PuK));
@@ -78,27 +79,31 @@
 
 -!findToken(Type,set([   ])): coinBalance(Amount) <- 
 	.print("Saldo atual: ", Amount).
-	
-+!criarMoeda: chainServer(Server) & myWallet(PrK, PuK) <- 
-	.print("Criando moeda");
-	velluscinum.deployToken(Server, PrK, PuK, "name:smartCoin", 200, smartCoin);
-	.wait(smartCoin(Coin)).
-
 
 +!pedirEmprestimo : cryptocurrency(Coin) & bankWallet(BankW) 
-            & chainServer(Server) 
-            & myWallet(PrK,PuK) <-
+            & chainServer(Server) & myWallet(PrK,PuK)
+            & not pedindoEmprestimo <-
+    +pedindoEmprestimo;
+    emprestimoCount;
 	.print("Pedindo emprestimo...");
-	velluscinum.deployNFT(Server,PrK,PuK, "name:motorista",
-                "description:Createing Bank Account", account);
+    ?emprestimoNum(Num);
+    .concat("nome:motorista;emprestimo:", Num, Data);
+	velluscinum.deployNFT(Server, PrK, PuK, Data,
+                "description:Creating Bank Account", account);
 	.wait(account(AssetID));
 
-	velluscinum.transferNFT(Server,PrK,PuK,AssetID,BankW,
+	velluscinum.transferNFT(Server, PrK, PuK, AssetID, BankW,
 				"description:requesting lend;value_chainCoin:100",requestID);
 	.wait(requestID(PP));
 	
 	.print("Lend Contract nr:",PP);
-	.send(bank, achieve, lending(PP,PuK,100)).
+	.send(bank, achieve, lending(PP, PuK, 100));
+    .wait(bankAccount(ok));
+    -pedindoEmprestimo;
+    !obterConteudoCarteira.
+
++!pedirEmprestimo : pedindoEmprestimo <-
+    .print("Ja esta pedindo emprestimo").
 
 +!pedirEmprestimo : true <-
     .print("Erro ao pedir emprestimo");
@@ -141,13 +146,21 @@
     !pagarUso(Valor).
 
 +!pagarUso(Valor) : cryptocurrency(Coin) & chainServer(Server)
-            & myWallet(PrK,PuK) & managerWallet(Manager) <-
+            & myWallet(PrK,PuK) & managerWallet(Manager) 
+            & (coinBalance(Balance) & (Balance >= Valor))<-
     .print("Pagamento em andamento...");
     ?idVaga(IdVaga);
     velluscinum.transferToken(Server,PrK,PuK,Coin,Manager,Valor,payment);
     .wait(payment(TransactionId));
     .print("Pagamento realizado");
     .send(manager, achieve, validarPagamento(TransactionId, IdVaga, Valor)).
+
++!pagarUso(Valor) : cryptocurrency(Coin) & chainServer(Server)
+            & myWallet(PrK,PuK) & managerWallet(Manager) 
+            & (coinBalance(Balance) & (Balance < Valor))<-
+    .print("Saldo insuficiente");
+    !pedirEmprestimo;
+    !pagarUso(Valor).
 
 +!estacionar[source(self)] : tempoUso(Min) & idVaga(Id) <-
     .print("--------------------------------------------------------------");
@@ -203,4 +216,5 @@
 +!leave : true <-
     .print("Saindo da vaga");
     -parked(Id);
-    .print("--------------------------------------------------------------").
+    .print("--------------------------------------------------------------");
+    !escolher.
