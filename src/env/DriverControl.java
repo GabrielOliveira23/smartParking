@@ -13,7 +13,6 @@ public class DriverControl extends Artifact {
             log("Emprestimo num: " + count);
             defineObsProperty("emprestimoNum", count);
         } else {
-            log("Emprestimo num: 0");
             defineObsProperty("emprestimoNum", 0);
         }
     }
@@ -26,7 +25,7 @@ public class DriverControl extends Artifact {
 
         useMinutes = useMinutes < 20 ? 20 : useMinutes;
 
-        choice = 0;
+        choice = 1;
         switch (choice) {
             case 0: {
                 /*

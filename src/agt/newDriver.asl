@@ -12,14 +12,13 @@
 
 +vagaDisponivel(Status)[source(manager)] : Status == true <-
     .wait(3000);
-    ?tipoVaga(Tipo);
+    ?idVaga(Id);
     ?decisao(Choice);
     ?dataUso(Data);
     if (Choice == "COMPRA") {
         !estacionar;
     } elif (Choice == "RESERVA") {
-        .print("Indo para reservar vaga...");
-        !reservar(Tipo, Data);
+        !reservar(Id, Data);
     } else {
         .print("Escolha invalida");
     }.
@@ -122,13 +121,14 @@
 +valorAPagarUso(Value)[source(manager)] <- !pagarUso(Value).
 
 +!comecarNegociacao[source(self)] : decisao(EscolhaDriver) & tipoVaga(Tipo) 
-            & EscolhaDriver == "COMPRA" <-
-    consultPrice(Tipo);
+            & tempoUso(Tempo) <-
+    consultPrice(Tipo, Tempo);
     ?precoTabela(Price);
     ?dataUso(Data);
     
     .print("Tipo da vaga: ", Tipo);
-    .print("Preco da vaga (por hora): ", Price);
+    .print("Tempo de uso: ", Tempo, " minutos");
+    .print("Preco total da vaga: ", Price);
     .print("Data de uso: ", Data);
     .print("Consultando vaga...");
     .send(manager, achieve, consultarVaga(Tipo, Data, EscolhaDriver)).
@@ -153,7 +153,7 @@
     velluscinum.transferToken(Server,PrK,PuK,Coin,Manager,Valor,payment);
     .wait(payment(TransactionId));
     .print("Pagamento realizado");
-    .send(manager, achieve, validarPagamento(TransactionId, IdVaga, Valor)).
+    .send(manager, achieve, validarPagamento(TransactionId, IdVaga)).
 
 +!pagarUso(Valor) : cryptocurrency(Coin) & chainServer(Server)
             & myWallet(PrK,PuK) & managerWallet(Manager) 
@@ -169,19 +169,19 @@
 
 // ----- RESERVAR -----
 
-+!comecarNegociacao[source(self)] : decisao(EscolhaDriver) & tipoVaga(Tipo)
-            & EscolhaDriver == "RESERVA" <-
-    ?dataUso(Data);
++!reservar(Id, Data) : tempoUso(Min) & chainServer(Server) & myWallet(PrK,PuK) 
+            & cryptocurrency(Coin) & managerWallet(Manager) <- 
+    .print("Pagando reserva...");
+    ?precoTabela(Preco);
+    velluscinum.transferToken(Server, PrK, PuK, Coin, Manager, Preco, payment);
+    .wait(payment(TransactionId));
+    .send(manager, tell, pagouReserva(TransactionId, Id, Data, Min)).
 
-    .print("Tipo da vaga: ", Tipo);
-    .print("Data de uso: ", Data);
-
-    !reservar(Tipo, Data).
-
-+!reservar(Tipo, Data) : tempoUso(Min) & chainServer(Server)
-            & myWallet(Priv,Pub) & cryptocurrency(Coin) <- 
-    .print("Solicitando reserva...");
-    .send(manager, achieve, querReservar(Tipo, Data, Min)).
++!reservar(Id, Data): not managerWallet(Manager) <-
+    .wait(5000);
+    .send(manager,askOne,managerWallet(Manager),Reply);
+    +Reply;
+    !reservar(Id, Data).
 
 +reservationChoice(Choice) <- 
     .print("Escolha de reserva: ", Choice);
@@ -206,14 +206,14 @@
     .print("Estacionando veiculo na vaga ", Id);
     +parked(Id);
     .wait(Min*10);
-    !leave.
+    !sairEstacionamento.
 
 +!sairEstacionamento[source(manager)] : true <-
     .print("Saindo do estacionamento");
     -parked(Id);
     .print("--------------------------------------------------------------").
 
-+!leave : true <-
++!sairEstacionamento[source(self)] : true <-
     .print("Saindo da vaga");
     -parked(Id);
     .print("--------------------------------------------------------------");
