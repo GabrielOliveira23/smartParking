@@ -1,7 +1,9 @@
-.idea
-build
+*.idea
+build/*
 bin
-.bin
-.gradle
-.probe
-.lock
+*.bin
+.gradle/*
+*.gradle
+gradle/*
+*.probe
+*.lock
