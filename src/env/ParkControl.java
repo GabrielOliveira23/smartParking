@@ -7,6 +7,10 @@ public class ParkControl extends Artifact {
         return new KeyValueObject(key, value);
     }
 
+    // static KeyValueObject extractData(String field) {
+
+    // }
+
     @OPERATION
     void verificarVaga(String type, String date, String driverIntention, Object[] metaDataList) {
         NewVaga vaga = new NewVaga("", "");
@@ -59,6 +63,26 @@ public class ParkControl extends Artifact {
     }
 
     @OPERATION
+    void verificarReserva(Object[] dataList) {
+        for (Object data : dataList) {
+            KeyValueObject object = extractData((Object[]) data);
+            if (object.getKey().equals("reservationDate")) {
+                defineObsProperty("reservaDisponivel", false);
+                return;
+            }
+        }
+        defineObsProperty("reservaDisponivel", true);
+    }
+
+    @OPERATION
+    void acharReserva(String assetId, Object[] listaVagas) {
+        for (Object data : listaVagas) {
+            KeyValueObject object = extractData((Object[]) data);
+            System.out.println(object.getKey() + " - " + object.getValue());
+        }
+    }
+
+    @OPERATION
     void calcularValorAPagarUso(String tipoVaga, int minutos) {
         double preco = ParkPricing.getPreco(TipoVagaEnum.setTipoVaga(tipoVaga));
         log("Preço da tabela: " + preco);
@@ -66,44 +90,4 @@ public class ParkControl extends Artifact {
         log("Valor a pagar: " + preco);
         defineObsProperty("valorAPagarUso", preco);
     }
-
-    @OPERATION
-    void bookVacancy(String tipoVaga, Object[] listaVagas, String data, int minutos){
-        
-    }
-
-    // @OPERATION
-    // void bookVacancy(String tipoVaga, Object[] listaVagas, String data, int minutos) {
-    //     for (Object vagaObj : listaVagas) {
-    //         Vaga vaga = getVagaFromBelief(vagaObj.toString());
-    //         if (vaga.getTipoVaga().equals(tipoVaga.toUpperCase())) {
-    //             if (vaga.getReservas().isEmpty()) {
-    //                 log("Vaga consultada: " + vaga.getId());
-    //                 log("---------> Não tem reservas");
-    //                 defineObsProperty("vagaDisponivelParaReserva", vaga.isDisponivel());
-    //                 defineObsProperty("idVaga", vaga.getId());
-    //                 return;
-    //             } else {
-    //                 // if exist reservations
-    //                 String[] dateTimeRequired = data.split(" - ");
-    //                 for (String reserva : vaga.getReservas()) {
-    //                     String[] dateTime = reserva.split(" - ");
-    //                     if (dateTime[0].equals(dateTimeRequired[0]) && dateTime[1].equals(dateTimeRequired[1])) {
-    //                         // if the reservation is the same as the required
-    //                         defineObsProperty("vagaDisponivel", false);
-    //                         return;
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     // use minimum price to make an offer,
-    //     // like 0.8 of price is minimum acceptable
-    //     // double price = ParkPricing.consultPrice(idVacancy);
-    //     // price = Math.round(price * ((double) minutes / 60));
-    //     // log("Valor a pagar: " + price);
-
-    //     // defineObsProperty("valueToPay", price);
-    // }
 }

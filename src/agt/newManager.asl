@@ -30,7 +30,6 @@
 	.print("Vaga -> ", Head);
 	velluscinum.tokenInfo(Server, Head, all, content);
 	.wait(content(Metadata));
-	.print("Metadata -> ", Metadata);
 	verificarVaga(TipoVaga, Data, Intencao, Metadata);
 	?vagaDisponivel(X);
 	+idVaga(Head).
@@ -59,33 +58,61 @@
 	!stampProcess(TransactionId);
 	!sendReservation(IdVaga, Data, Tempo).
 
-+!sendReservation(Id, Date, Tempo)[source(self)] : chainServer(Server) & myWallet(PrK, PuK) <-
++!sendReservation(Id, Date, Tempo)[source(self)] : chainServer(Server) & myWallet(PrK, PuK)
+			& driverWallet(DriverW) <-
 	.print("Reservando vaga...");
-	!ocuparVaga(Id, Date, Tempo, Status);
-	.wait(transfReserva(TransferId));
-	-transfReserva(TransferId);
-	.print("Vaga Ocupada!");
-	
 	velluscinum.tokenInfo(Server, Id, metadata, content);
 	.wait(content(Content));
+	verificarReserva(Content);
 	getCurrentStatus(Content);
 	.wait(currentStatus(Status));
-	.concat("status:", Status, ";reservation:", Id, ";date:", Date, Data);
-	.concat("description:vacancy reservation", Description);
-	velluscinum.deployNFT(Server, PrK, PuK, Data, Description, account);
-	.wait(account(ReservaId));
-	
-	.send(driver, tell, reservationNFT(ReservaId, TransferId)).
 
-+!ocuparVaga(Id, Data, Tempo, Status) : chainServer(Server) & myWallet(PrK, PuK) <-
+	.concat("status:", Status, ";reservation:", Id, ";date:", Date, Data);
+	.concat("description:vacancy reservation", Descricao);
+	velluscinum.deployNFT(Server, PrK, PuK, Data, Descricao, nft);
+	.wait(nft(ReservaId));
+	
+	!ocuparVaga(Id, Date, Tempo, Status, ReservaId);
+	?ocupation(OcupationId);
+
+	.concat("reservation:", Id, ";date:", Date, ";time:", Tempo, DescricaoReserva);
+	velluscinum.transferNFT(Server, PrK, PuK, ReservaId, DriverW, DescricaoReserva, transfer);
+	.wait(transfer(TransferId));
+	
+	.print("Reserva transferida para motorista");
+	.send(driver, tell, reservaNFT(ReservaId, TransferId)).
+
++!sendReservation(Id, Date, Tempo)[source(self)] : not driverWallet(DriverW) <-
+	.send(driver, askOne, driverWallet(DriverW), Reply);
+	.wait(3000);
+	+Reply;
+	!sendReservation(Id, Date, Tempo).
+
+-!sendReservation(Id, Date, Tempo)[source(self)] <-
+	.print("Nao foi possivel reservar a vaga").
+
++!ocuparVaga(Id, Data, Tempo, Status, ReservaId) : chainServer(Server) & myWallet(PrK, PuK)
+			& (reservaDisponivel(X) & (X == true)) <-
 	.print("Ocupando Vaga...");
 	.print("Id -> ", Id);
 	.print("Data -> ", Data);
-	.concat("status:", Status, ";reservation:" , Data, ";tempo:", Tempo, Metadata);
-	.print("Metadata ocupacao -> ", Metadata);
+	.concat("status:", Status, ";reservationId:", ReservaId, 
+			";reservationDate:", Data, ";reservationTime:", Tempo, Metadata);
 	velluscinum.transferNFT(Server, PrK, PuK, Id, PuK, Metadata, ocupation);
-	.wait(ocupation(TransferId));
-	+transfReserva(TransferId).
+	.wait(ocupation(OcupationId));
+	.print("Vaga Ocupada!").
+
+// -------------------------- USO DA RESERVA --------------------------
+
++querUsarReserva(AssetId, TransactionId) <- 
+	!validarReserva(AssetId);
+	!stampProcess(TransactionId);
+	.send(driver, achieve, park).
+
++!validarReserva(AssetId) : chainServer(Server) & myWallet(PrK, PuK)
+			& listaVagas(Lista) <-
+	.print("Validando reserva...");
+	acharReserva(AssetId, Lista).
 
 // ---------------------- NEGOCIACAO DA RESERVA -----------------------
 
@@ -94,14 +121,14 @@
 
 // ---------------------------- AUXILIARES ----------------------------
 
++reservationUse(TransactionId) <- !stampProcess(TransactionId);
+	.print("reserva usada");
+	.send(driver, achieve, park).
+
 +!validarPagamento(Transfer, IdVaga)[source(driver)] :  driverIntention(Intention) <-
 	!stampProcess(Transfer);
 	.print("Vaga paga!");
 	!liberarVaga(IdVaga).
-
-+reservationUse(TransactionId) <- !stampProcess(TransactionId);
-	.print("reserva usada");
-	.send(driver, achieve, park).
 
 +!stampProcess(Transfer)[source(self)] : chainServer(Server) 
             & myWallet(PrK,PuK) <-

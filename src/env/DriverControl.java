@@ -20,7 +20,7 @@ public class DriverControl extends Artifact {
     @OPERATION
     void defineChoice() {
         Random random = new Random();
-        int choice = random.nextInt(2);
+        int choice = random.nextInt(3);
         int useMinutes = random.nextInt(180);
 
         useMinutes = useMinutes < 20 ? 20 : useMinutes;
@@ -47,7 +47,7 @@ public class DriverControl extends Artifact {
 
                 defineObsProperty("decisao", "RESERVA");
                 defineObsProperty("tempoUso", useMinutes);
-                defineObsProperty("dataUso", "31/01 - 10:00");
+                defineObsProperty("dataUso", "20242504");
                 definirTipoVaga();
                 break;
             }
@@ -58,7 +58,7 @@ public class DriverControl extends Artifact {
                  */
 
                 defineObsProperty("decisao", "COMPRARESERVA");
-                defineObsProperty("dataUso", "31/01 - 10:00");
+                defineObsProperty("dataUso", "20242504");
                 definirTipoVaga();
                 break;
             }
@@ -98,6 +98,47 @@ public class DriverControl extends Artifact {
                  */
                 log("Processo de venda de reserva");
                 defineObsProperty("reservationChoice", "VENDER");
+                break;
+            }
+        }
+    }
+
+    @OPERATION
+    void escolherReserva(Object[] nftList) {
+        if (nftList.length == 0) {
+            log("Nenhuma reserva encontrada");
+            return;
+        }
+        
+        Random random = new Random();
+        if(random.nextInt(2) == 0) {
+            log("Motorista escolheu não usar nenhuma reserva");
+            return;
+        }
+
+        int randomInt = random.nextInt(nftList.length);
+        int escolhaReserva = random.nextInt(2);
+
+        String nft = nftList[randomInt].toString();
+        defineObsProperty("reservaEscolhida", nft);
+
+        switch (escolhaReserva) {
+            case 0: {
+                /*
+                 * primeiro caso: usar a reserva para entrar
+                 * no estacionamento
+                 */
+                log("Entrar no estacionamento");
+                defineObsProperty("decisaoReserva", "USAR");
+                break;
+            }
+            case 1: {
+                /*
+                 * segundo caso: transferir a reserva para
+                 * outro motorista
+                 */
+                log("Processo de venda de reserva");
+                defineObsProperty("decisaoReserva", "VENDER");
                 break;
             }
         }
