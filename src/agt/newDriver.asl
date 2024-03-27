@@ -27,17 +27,14 @@
     .print("Vaga indisponivel").
 
 +reservaNFT(ReservaId, TransferId)[source(manager)] : listaNFTs(Lista) <- 
-    !stampProcess(TransferId);
     .print("Reserva recebida");
-    .print("ListaNFTs -> ", Lista);
-    .print("Adicionando -> ", ReservaId);
+    !stampProcess(TransferId);
     -+listaNFTs([ReservaId|Lista]);
     !escolher.
 
 +reservaNFT(ReservaId, TransferId)[source(manager)] : not listaNFTs(Lista) <- 
-    !stampProcess(TransferId);
     .print("Reserva recebida");
-    .print("NovaListaNFTs -> ", ReservaId);
+    !stampProcess(TransferId);
     +listaNFTs([ReservaId]);
     !escolher.
 
@@ -110,15 +107,12 @@
 
 +!compare(Term,[Type,AssetID,Qtd],set(V)) : (Term == Type) & listaNFTs(Lista) <-    
     .print("Type: ", Type, " ID: ", AssetID);
-    -+listaNFTs([AssetID|Lista]);
-    .print("lista atualizada");
-    .print("Lista ------> ", Lista).
+    -+listaNFTs([AssetID|Lista]).
 
 +!compare(Term,[Type,AssetID,Qtd],set(V)) : (Term == Type) & not listaNFTs(Lista) <-
     .print("Type: ", Type, " ID: ", AssetID);
     .concat(AssetID, Lista);
-    +listaNFTs([Lista]);
-    .print("Lista ------> ", Lista).
+    +listaNFTs([Lista]).
 
 -!compare(Term,[Type,AssetID,Qtd],set(V)).
 
@@ -250,9 +244,10 @@
             & managerWallet(ManagerW) & reservaEscolhida(ReservaId) <-
     .print("Escolha de reserva: ", ReservaId);
     velluscinum.transferNFT(Server, PrK, PuK, ReservaId, ManagerW,
-            "description:Using Reservation", usoReserva(TransactionId));
+            "description:Using Reservation", usoReserva);
     .wait(usoReserva(TransactionId));
     .send(manager, tell, querUsarReserva(ReservaId, TransactionId)).
+
 // ----- VALIDACAO -----
 +!stampProcess(TransactionId)[source(self)] : chainServer(Server)
             & myWallet(PrK,PuK) <-

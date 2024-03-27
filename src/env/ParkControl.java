@@ -75,10 +75,11 @@ public class ParkControl extends Artifact {
     }
 
     @OPERATION
-    void acharReserva(String assetId, Object[] listaVagas) {
-        for (Object data : listaVagas) {
+    void acharReserva(String assetId, Object[] metadata) {
+        log("Reserva encontrada para o ativo " + assetId);
+        for (Object data : metadata) {
             KeyValueObject object = extractData((Object[]) data);
-            System.out.println(object.getKey() + " - " + object.getValue());
+            log(object.getKey() + " - " + object.getValue());
         }
     }
 

@@ -22,7 +22,7 @@
 	+driverIntention(Intencao);
 	!verificarDisponibilidade(TipoVaga, Data, Intencao, set(Lista)).
 
-+!consultarVaga(TipoVaga, Data, Intencao)[source(driver)] : not listaVagas(Vagas) <-
++!consultarVaga(TipoVaga, Data, Intencao)[source(driver)] : not listaVagas(Lista) <-
 	.print("Estacionamento fechado!").
 
 +!verificarDisponibilidade(TipoVaga, Data, Intencao, set([Head|Tail])): chainServer(Server) & not vagaDisponivel(X) <-
@@ -103,15 +103,28 @@
 
 // -------------------------- USO DA RESERVA --------------------------
 
-+querUsarReserva(ReservaId, TransactionId) <- 
-	!validarReserva(ReservaId);
++querUsarReserva(ReservaId, TransactionId) <-
 	!stampProcess(TransactionId);
+	!validarReserva(ReservaId);
 	.send(driver, achieve, park).
 
-+!validarReserva(AssetId) : chainServer(Server) & myWallet(PrK, PuK)
-			& listaVagas(Lista) <-
++!validarReserva(ReservaId) : listaVagas(Lista) <-
 	.print("Validando reserva...");
-	acharReserva(AssetId, Lista).
+	!percorrerListaVagas(ReservaId, nft, set(Lista)).
+	
++!percorrerListaVagas(ReservaId, Term, set([Head|Tail])) : not reservaEncontrada(VagaId) <- 
+    !analisarVaga(ReservaId, Term, Head, set(Tail));
+    !percorrerListaVagas(ReservaId, Term,set(Tail)).
+
+-!percorrerListaVagas(Type,set([ ])) <- .print("falhou").
+
++!analisarVaga(ReservaId, Term,[Type,AssetID, Qtd],set(V)): (Term  == Type) & chainServer(Server) <-
+	.print("Vaga -> ", AssetID);
+	velluscinum.tokenInfo(Server, AssetID, metadata, content);
+	.wait(content(Metadata));
+	acharReserva(ReservaId, Metadata).
+
+-!analisarVaga(ReservaId, Term, [Type,AssetID,Qtd], set(V)) <- .print("banana").
 
 // ---------------------- NEGOCIACAO DA RESERVA -----------------------
 
