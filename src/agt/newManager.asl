@@ -54,7 +54,6 @@
 // -------------------------- COMPRAR RESERVA -------------------------
 
 +pagouReserva(TransactionId, IdVaga, Data, Tempo)[source(driver)] <-
-	.print("Validando pagamento...");
 	!stampProcess(TransactionId);
 	!sendReservation(IdVaga, Data, Tempo).
 
@@ -104,8 +103,8 @@
 
 // -------------------------- USO DA RESERVA --------------------------
 
-+querUsarReserva(AssetId, TransactionId) <- 
-	!validarReserva(AssetId);
++querUsarReserva(ReservaId, TransactionId) <- 
+	!validarReserva(ReservaId);
 	!stampProcess(TransactionId);
 	.send(driver, achieve, park).
 
@@ -199,8 +198,7 @@
 	.wait(account(Vaga5Id));
 
 	Lista = [Vaga1Id, Vaga2Id, Vaga3Id, Vaga4Id, Vaga5Id];
-	-+listaVagas(Lista);
-	!abrirEstacionamento.
+	-+listaVagas(Lista).
 
 +!findToken(Term,set([Head|Tail])) <- 
     !compare(Term,Head,set(Tail));

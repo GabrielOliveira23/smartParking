@@ -29,39 +29,64 @@
 +reservaNFT(ReservaId, TransferId)[source(manager)] : listaNFTs(Lista) <- 
     !stampProcess(TransferId);
     .print("Reserva recebida");
-    .concat(AssetId, Lista, NovaLista);
-    .print("NovaListaNFTs -> ", NovaLista);
-    -+listaNFTs(NovaLista).
+    .print("ListaNFTs -> ", Lista);
+    .print("Adicionando -> ", ReservaId);
+    -+listaNFTs([ReservaId|Lista]);
+    !escolher.
 
 +reservaNFT(ReservaId, TransferId)[source(manager)] : not listaNFTs(Lista) <- 
     !stampProcess(TransferId);
     .print("Reserva recebida");
     .print("NovaListaNFTs -> ", ReservaId);
-    +listaNFTs([ReservaId]).
+    +listaNFTs([ReservaId]);
+    !escolher.
 
 +reservationAvailable(Type,Date,Min)[source(driver)] <-
     .print("Motorista colocou a reserva disponivel").
 
-+!escolher : true <-
++!escolher : not myWallet(PrK, PuK) <-
     .wait(estacionamentoAberto);
-    defineChoice;
-    .print("Criando conta bancaria");
     !criarCarteira;
     !obterConteudoCarteira;
     .wait(coinBalance(Balance));
 	.send(manager,askOne,managerWallet(Manager),Reply);
 	.wait(5000);
 	+Reply;
-    escolherReserva(listaNFTs);
-    ?reservaEscolhida(Reserva).
 
--!escolher <- !comecarNegociacao.
+    defineChoice;
+    ?decisao(Choice);
+    if (Choice == "RESERVA") {
+        ?listaNFTs(Lista);
+        escolherReserva(Lista);
+    } elif (Choice == "COMPRA") {
+        !comecarNegociacao;
+    } else {
+        .print("Escolha invalida"); 
+    }.
+
++!escolher : estacionamentoAberto & myWallet(PrK, PuK)
+            & managerWallet(ManagerW) & coinBalance(Balance) <-
+    defineChoice;
+    ?decisao(Choice);
+    if (Choice == "RESERVA") {
+        ?listaNFTs(Lista);
+        .print("ListaNFTs -> ", Lista);
+        escolherReserva(Lista);
+    } elif (Choice == "COMPRA") {
+        !comecarNegociacao;
+    } else {
+        .print("Escolha invalida"); 
+    }.
+
+-!escolher : not listaNFTs(Lista) <-
+    +listaNFTs([]);
+    escolherReserva([]).
 // ----------------- ACOES CARTEIRA -----------------
 
 +driverWallet(PuK) <- .broadcast(tell, driverWallet(PuK)).
 
 +!criarCarteira : not myWallet(PrK,PuK) <-
-    .print("Obtendo carteira...");
+    .print("Obtendo carteira digital...");
     velluscinum.loadWallet(myWallet);
 	.wait(myWallet(PrK,PuK));
     +driverWallet(PuK).
@@ -79,22 +104,29 @@
     !findToken(Term,set(Tail)).
 
 +!compare(Term,[Type, AssetID, Qtd],set(V)) : (Term == AssetID) <- 
-    .print("Type: ", Type, " ID: ", AssetID," Qtd: ", Qtd);
-	+coinBalance(Qtd).
+    .print("Type: ", Type, " ID: ", AssetID);
+	+coinBalance(Qtd);
+    .print("Saldo atual: ", Qtd).
 
-+!compare(Term,[Type,AssetID,Qtd],set(V)) : (Term == Type) & listaNFTs(Lista) <-
-    .print("Type: ", Type, " ID: ", AssetID," Qtd: ", Qtd);
-    .concat(AssetID, Lista, NovaLista);
-    -+listaNFTs(NovaLista).
++!compare(Term,[Type,AssetID,Qtd],set(V)) : (Term == Type) & listaNFTs(Lista) <-    
+    .print("Type: ", Type, " ID: ", AssetID);
+    -+listaNFTs([AssetId|Lista]);
+    .print("lista atualizada");
+    .print("Lista ------> ", Lista).
 
--!compare(Term,[Type,AssetID,Qtd],set(V)) <- .print("The asset is not Registered Coin").
++!compare(Term,[Type,AssetID,Qtd],set(V)) : (Term == Type) & not listaNFTs(Lista) <-
+    .print("Type: ", Type, " ID: ", AssetID);
+    .concat(AssetId, Lista);
+    +listaNFTs([Lista]);
+    .print("Lista ------> ", Lista).
+
+-!compare(Term,[Type,AssetID,Qtd],set(V)).
 
 -!findToken(Type,set([   ])) : not coinBalance(Amount) <- 
 	.print("Moeda Nao encontrada");
     !pedirEmprestimo.
 
--!findToken(Type,set([   ])) : coinBalance(Amount) <- 
-	.print("Saldo atual: ", Amount).
+-!findToken(Type,set([   ])).
 
 +!pedirEmprestimo : cryptocurrency(Coin) & bankWallet(BankW) 
             & chainServer(Server) & myWallet(PrK,PuK)
@@ -202,7 +234,9 @@
 
 +decisaoReserva(Choice) <- 
     .print("Decisao da reserva: ", Choice);
-    if (Choice == "USAR") {
+    if (Choice == "RESERVAR") {
+        !comecarNegociacao;
+    } elif (Choice == "USAR") {
         !useReservation;
     } elif(Choice == "VENDER") {
         !makeVacancyAvailable;
@@ -218,7 +252,7 @@
     velluscinum.transferNFT(Server, PrK, PuK, ReservaId, ManagerW,
             "description:Using Reservation", usoReserva(TransactionId));
     .wait(usoReserva(TransactionId));
-    .send(manager, tell, querUsarReserva(TransactionId)).
+    .send(manager, tell, querUsarReserva(ReservaId, TransactionId)).
 // ----- VALIDACAO -----
 +!stampProcess(TransactionId)[source(self)] : chainServer(Server)
             & myWallet(PrK,PuK) <-

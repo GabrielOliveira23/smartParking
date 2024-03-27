@@ -70,71 +70,42 @@ public class DriverControl extends Artifact {
     }
 
     @OPERATION
-    void defineReservationChoice(String nft) {
-        Random random = new Random();
-        int choice = random.nextInt(2);
-
-        if (nft.isEmpty()) {
-            log("Nenhuma reserva encontrada");
-            // testing plan fail
-            failed("Nenhuma reserva encontrada");
-            return;
-        }
-
-        switch (choice) {
-            case 0: {
-                /*
-                 * primeiro caso: usar a reserva para entrar
-                 * no estacionamento
-                 */
-                log("Entrar no estacionamento");
-                defineObsProperty("reservationChoice", "USAR");
-                break;
-            }
-            case 1: {
-                /*
-                 * segundo caso: transferir a reserva para
-                 * outro motorista
-                 */
-                log("Processo de venda de reserva");
-                defineObsProperty("reservationChoice", "VENDER");
-                break;
-            }
-        }
-    }
-
-    @OPERATION
     void escolherReserva(Object[] nftList) {
-        if (nftList.length == 0) {
-            log("Nenhuma reserva encontrada");
-            return;
-        }
-        
         Random random = new Random();
-        if(random.nextInt(2) == 0) {
-            log("Motorista escolheu não usar nenhuma reserva");
-            return;
+        int escolhaReserva = random.nextInt(3);
+        String nft = "";
+
+        if (nftList.length != 0) {
+            int randomInt = random.nextInt(nftList.length);
+            nft = nftList[randomInt].toString();
+            escolhaReserva = 1;
+        } else {
+            escolhaReserva = 0;
         }
-
-        int randomInt = random.nextInt(nftList.length);
-        int escolhaReserva = random.nextInt(2);
-
-        String nft = nftList[randomInt].toString();
-        defineObsProperty("reservaEscolhida", nft);
 
         switch (escolhaReserva) {
             case 0: {
                 /*
-                 * primeiro caso: usar a reserva para entrar
-                 * no estacionamento
+                 * primeiro caso: comprar uma reserva de vaga
                  */
-                log("Entrar no estacionamento");
-                defineObsProperty("decisaoReserva", "USAR");
+                log("Comprar uma reserva");
+                defineObsProperty("decisaoReserva", "RESERVAR");
                 break;
             }
             case 1: {
                 /*
-                 * segundo caso: transferir a reserva para
+                 * segundo caso: usar a reserva para entrar
+                 * no estacionamento
+                 */
+                log("Entrar no estacionamento");
+                defineObsProperty("decisaoReserva", "USAR");
+                log("-----------------> Reserva escolhida: " + nft);
+                defineObsProperty("reservaEscolhida", nft);
+                break;
+            }
+            case 2: {
+                /*
+                 * terceiro caso: transferir a reserva para
                  * outro motorista
                  */
                 log("Processo de venda de reserva");
