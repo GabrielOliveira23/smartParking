@@ -110,13 +110,13 @@
 
 +!compare(Term,[Type,AssetID,Qtd],set(V)) : (Term == Type) & listaNFTs(Lista) <-    
     .print("Type: ", Type, " ID: ", AssetID);
-    -+listaNFTs([AssetId|Lista]);
+    -+listaNFTs([AssetID|Lista]);
     .print("lista atualizada");
     .print("Lista ------> ", Lista).
 
 +!compare(Term,[Type,AssetID,Qtd],set(V)) : (Term == Type) & not listaNFTs(Lista) <-
     .print("Type: ", Type, " ID: ", AssetID);
-    .concat(AssetId, Lista);
+    .concat(AssetID, Lista);
     +listaNFTs([Lista]);
     .print("Lista ------> ", Lista).
 
