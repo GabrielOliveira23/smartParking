@@ -4,15 +4,28 @@ import java.util.Random;
 
 public class DriverControl extends Artifact {
     // private Proposta proposta = new Proposta();
+    @OPERATION
+    void emprestimoCount() {
+        ObsProperty emprestimoNum = getObsProperty("emprestimoNum");
+        if (emprestimoNum != null) {
+            int count = emprestimoNum.intValue();
+            count++;
+            log("Emprestimo num: " + count);
+            defineObsProperty("emprestimoNum", count);
+        } else {
+            defineObsProperty("emprestimoNum", 0);
+        }
+    }
 
     @OPERATION
     void defineChoice() {
         Random random = new Random();
-        int choice = random.nextInt(2);
+        int choice = random.nextInt(3);
         int useMinutes = random.nextInt(180);
 
         useMinutes = useMinutes < 20 ? 20 : useMinutes;
 
+        choice = 1;
         switch (choice) {
             case 0: {
                 /*
@@ -21,9 +34,8 @@ public class DriverControl extends Artifact {
                  */
 
                 defineObsProperty("decisao", "COMPRA");
-                defineObsProperty("useTime", useMinutes);
-                defineObsProperty("useDate", "NOW");
-                // trocar para now
+                defineObsProperty("tempoUso", useMinutes);
+                defineObsProperty("dataUso", "now");
                 definirTipoVaga();
                 break;
             }
@@ -34,8 +46,8 @@ public class DriverControl extends Artifact {
                  */
 
                 defineObsProperty("decisao", "RESERVA");
-                defineObsProperty("useTime", useMinutes);
-                defineObsProperty("useDate", "31/01 - 10:00");
+                defineObsProperty("tempoUso", useMinutes);
+                defineObsProperty("dataUso", "20242504");
                 definirTipoVaga();
                 break;
             }
@@ -46,7 +58,7 @@ public class DriverControl extends Artifact {
                  */
 
                 defineObsProperty("decisao", "COMPRARESERVA");
-                defineObsProperty("useDate", "31/01 - 10:00");
+                defineObsProperty("dataUso", "20242504");
                 definirTipoVaga();
                 break;
             }
@@ -58,34 +70,46 @@ public class DriverControl extends Artifact {
     }
 
     @OPERATION
-    void defineReservationChoice(String nft) {
+    void escolherReserva(Object[] nftList) {
         Random random = new Random();
-        int choice = random.nextInt(2);
+        int escolhaReserva = random.nextInt(3);
+        String nft = "";
 
-        if (nft.isEmpty()) {
-            log("Nenhuma reserva encontrada");
-            // testing plan fail
-            failed("Nenhuma reserva encontrada");
-            return;
+        if (nftList.length != 0) {
+            int randomInt = random.nextInt(nftList.length);
+            nft = nftList[randomInt].toString();
+            escolhaReserva = 1;
+        } else {
+            escolhaReserva = 0;
         }
 
-        switch (choice) {
+        switch (escolhaReserva) {
             case 0: {
                 /*
-                 * primeiro caso: usar a reserva para entrar
-                 * no estacionamento
+                 * primeiro caso: comprar uma reserva de vaga
                  */
-                log("Entrar no estacionamento");
-                defineObsProperty("reservationChoice", "USAR");
+                log("Comprar uma reserva");
+                defineObsProperty("decisaoReserva", "RESERVAR");
                 break;
             }
             case 1: {
                 /*
-                 * segundo caso: transferir a reserva para
+                 * segundo caso: usar a reserva para entrar
+                 * no estacionamento
+                 */
+                log("Entrar no estacionamento");
+                defineObsProperty("decisaoReserva", "USAR");
+                log("-----------------> Reserva escolhida: " + nft);
+                defineObsProperty("reservaEscolhida", nft);
+                break;
+            }
+            case 2: {
+                /*
+                 * terceiro caso: transferir a reserva para
                  * outro motorista
                  */
                 log("Processo de venda de reserva");
-                defineObsProperty("reservationChoice", "VENDER");
+                defineObsProperty("decisaoReserva", "VENDER");
                 break;
             }
         }
@@ -97,40 +121,5 @@ public class DriverControl extends Artifact {
 
         TipoVagaEnum tipoVaga = TipoVagaEnum.values()[randomInt];
         defineObsProperty("tipoVaga", tipoVaga.tipoVaga());
-    }
-
-    @OPERATION
-    void defineValueToPay(int idVacancy, int minutes) {
-        double vacancyPrice = (double) ParkPricing.consultPrice(idVacancy);
-        double valueToPay = vacancyPrice * ((double) minutes / 60);
-
-        valueToPay = Math.round(valueToPay);
-
-        defineObsProperty("valueToPay", valueToPay);
-    }
-
-    @OPERATION
-    void makeOffer(int idVaga, double precoTabela, String tipoVaga) {
-        // if (tipoVaga != null) {
-        // TipoVagaEnum typeVaga = TipoVagaEnum.setTipoVaga(tipoVaga);
-
-        // double precoFinal = barganhar(precoTabela);
-        // }
-    }
-
-    double barganhar(Double precoTabela) {
-        Random random = new Random();
-
-        Double min = 0.8;
-        Double max = 1.5;
-
-        Double valorAleatorio = min + (max - min) * random.nextDouble();
-
-        Double precoFinal = precoTabela * valorAleatorio;
-
-        precoFinal = Math.round(precoFinal * 100.0) / 100.0;
-
-        defineObsProperty("precoVaga", precoFinal);
-        return precoFinal;
     }
 }
