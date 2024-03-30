@@ -7,18 +7,14 @@ public class ParkControl extends Artifact {
         return new KeyValueObject(key, value);
     }
 
-    // static KeyValueObject extractData(String field) {
-
-    // }
-
     @OPERATION
     void verificarVaga(String type, String date, String driverIntention, Object[] metaDataList) {
         NewVaga vaga = new NewVaga("", "");
         for (Object metaData : metaDataList) {
             KeyValueObject object = extractData((Object[]) metaData);
-            if (object.getKey().equals("status") && object.getValue().equals("disponivel")) {
+            if (object.getKey().equals("status")) {
                 vaga.setStatus(object.getValue());
-            } else if (object.getKey().equals("tipo") && object.getValue().equals(type)) {
+            } else if (object.getKey().equals("tipo")) {
                 vaga.setTipoVaga(object.getValue());
             }
         }
@@ -28,7 +24,7 @@ public class ParkControl extends Artifact {
         switch (driverIntention) {
             case "COMPRA": {
                 if (vaga.getStatus().equals("disponivel") && vaga.getTipoVaga().equals(type)) {
-                    System.out.println("Vaga disponível: " + vaga.getTipoVaga());
+                    log("Vaga disponivel: " + vaga.getTipoVaga());
                     defineObsProperty("vagaDisponivel", true);
                     defineObsProperty("tipoVaga", vaga.getTipoVaga());
                 }
@@ -36,7 +32,7 @@ public class ParkControl extends Artifact {
             }
             case "RESERVA": {
                 if (vaga.getStatus().equals("disponivel") && vaga.getTipoVaga().equals(type)) {
-                    System.out.println("Vaga disponível: " + vaga.getTipoVaga());
+                    log("Vaga disponível: " + vaga.getTipoVaga());
                     defineObsProperty("vagaDisponivel", true);
                     defineObsProperty("tipoVaga", vaga.getTipoVaga());
                     defineObsProperty("dataUso", date);
@@ -75,11 +71,15 @@ public class ParkControl extends Artifact {
     }
 
     @OPERATION
-    void acharReserva(String assetId, Object[] metadata) {
-        log("Reserva encontrada para o ativo " + assetId);
+    void acharReserva(String reservationId, String assetId, Object[] metadata) {
         for (Object data : metadata) {
             KeyValueObject object = extractData((Object[]) data);
-            log(object.getKey() + " - " + object.getValue());
+            if (object.getKey().equals("reservationId") && object.getValue().equals(reservationId)) {
+                log("Reserva encontrada: " + reservationId);
+                log("Reserva encontrada: " + assetId);
+                defineObsProperty("reservaEncontrada", assetId);
+                return;
+            }
         }
     }
 

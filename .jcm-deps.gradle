@@ -5,4 +5,5 @@ apply plugin: 'java'
 
 dependencies {
     implementation('com.github.chon-group:velluscinum-jcm:1.2')
+
 }
