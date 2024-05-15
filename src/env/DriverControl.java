@@ -99,7 +99,7 @@ public class DriverControl extends Artifact {
                  */
                 log("Entrar no estacionamento");
                 defineObsProperty("decisaoReserva", "USAR");
-                log("-----------------> Reserva escolhida: " + nft);
+                log("Reserva escolhida: " + nft);
                 defineObsProperty("reservaEscolhida", nft);
                 break;
             }

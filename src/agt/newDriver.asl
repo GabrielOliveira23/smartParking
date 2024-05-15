@@ -4,7 +4,7 @@
 /* Initial beliefs */
 
 /* Initial goals */
-!escolher.
+!comecar.
 
 /* Plans */
 
@@ -27,50 +27,49 @@
     .print("Vaga indisponivel").
 
 +reservaNFT(ReservaId, TransferId)[source(manager)] : listaNFTs(Lista) <- 
-    !stampProcess(TransferId);
     .print("Reserva recebida");
-    .print("ListaNFTs -> ", Lista);
-    .print("Adicionando -> ", ReservaId);
+    !stampProcess(TransferId);
     -+listaNFTs([ReservaId|Lista]);
     !escolher.
 
 +reservaNFT(ReservaId, TransferId)[source(manager)] : not listaNFTs(Lista) <- 
-    !stampProcess(TransferId);
     .print("Reserva recebida");
-    .print("NovaListaNFTs -> ", ReservaId);
+    !stampProcess(TransferId);
     +listaNFTs([ReservaId]);
     !escolher.
 
 +reservationAvailable(Type,Date,Min)[source(driver)] <-
     .print("Motorista colocou a reserva disponivel").
 
-+!escolher : not myWallet(PrK, PuK) <-
++!comecar <-
     .wait(estacionamentoAberto);
     !criarCarteira;
     !obterConteudoCarteira;
     .wait(coinBalance(Balance));
-	.send(manager,askOne,managerWallet(Manager),Reply);
-	.wait(5000);
-	+Reply;
+    .send(manager,askOne,managerWallet(Manager),Reply);
+    .wait(5000);
+    +Reply;
 
+    !escolher.
+
++!recomecar <-
+    -decisao(Choice);
+    -vagaDisponivel(Status);
+    -reservaEscolhida(ReservaId);
+    -vagaOcupada(Id);
+    -decisarReserva(Choice);
+
+    !obterConteudoCarteira;
+    .wait(coinBalance(Balance));
+
+    !escolher.
+
++!escolher <-
+    -decisao(Choice);
     defineChoice;
     ?decisao(Choice);
     if (Choice == "RESERVA") {
         ?listaNFTs(Lista);
-        escolherReserva(Lista);
-    } elif (Choice == "COMPRA") {
-        !comecarNegociacao;
-    } else {
-        .print("Escolha invalida"); 
-    }.
-
-+!escolher : estacionamentoAberto & myWallet(PrK, PuK)
-            & managerWallet(ManagerW) & coinBalance(Balance) <-
-    defineChoice;
-    ?decisao(Choice);
-    if (Choice == "RESERVA") {
-        ?listaNFTs(Lista);
-        .print("ListaNFTs -> ", Lista);
         escolherReserva(Lista);
     } elif (Choice == "COMPRA") {
         !comecarNegociacao;
@@ -93,6 +92,8 @@
 
 +!obterConteudoCarteira : chainServer(Server) & myWallet(PrK, PuK)
             & cryptocurrency(Coin) <-
+    -listaNFTs(Lista);
+    -coinBalance(Amount);
     .print("Obtendo conteudo da carteira...");
     velluscinum.walletContent(Server, PrK, PuK, content);
     .wait(content(Content));
@@ -103,24 +104,21 @@
     !compare(Term,Head,set(Tail));
     !findToken(Term,set(Tail)).
 
-+!compare(Term,[Type, AssetID, Qtd],set(V)) : (Term == AssetID) <- 
-    .print("Type: ", Type, " ID: ", AssetID);
++!compare(Term,[Type, AssetId, Qtd],set(V)) : (Term == AssetId) <- 
+    .print("Type: ", Type, " ID: ", AssetId);
 	+coinBalance(Qtd);
     .print("Saldo atual: ", Qtd).
 
-+!compare(Term,[Type,AssetID,Qtd],set(V)) : (Term == Type) & listaNFTs(Lista) <-    
-    .print("Type: ", Type, " ID: ", AssetID);
-    -+listaNFTs([AssetID|Lista]);
-    .print("lista atualizada");
-    .print("Lista ------> ", Lista).
++!compare(Term,[Type,AssetId,Qtd],set(V)) : (Term == Type) & listaNFTs(Lista) <-    
+    .print("Type: ", Type, " ID: ", AssetId);
+    -+listaNFTs([AssetId|Lista]).
 
-+!compare(Term,[Type,AssetID,Qtd],set(V)) : (Term == Type) & not listaNFTs(Lista) <-
-    .print("Type: ", Type, " ID: ", AssetID);
-    .concat(AssetID, Lista);
-    +listaNFTs([Lista]);
-    .print("Lista ------> ", Lista).
++!compare(Term,[Type,AssetId,Qtd],set(V)) : (Term == Type) & not listaNFTs(Lista) <-
+    .print("Type: ", Type, " ID: ", AssetId);
+    .concat(AssetId, Lista);
+    +listaNFTs([Lista]).
 
--!compare(Term,[Type,AssetID,Qtd],set(V)).
+-!compare(Term,[Type,AssetId,Qtd],set(V)).
 
 -!findToken(Type,set([   ])) : not coinBalance(Amount) <- 
 	.print("Moeda Nao encontrada");
@@ -138,9 +136,9 @@
     .concat("nome:motorista;emprestimo:", Num, Data);
 	velluscinum.deployNFT(Server, PrK, PuK, Data,
                 "description:Creating Bank Account", account);
-	.wait(account(AssetID));
+	.wait(account(AssetId));
 
-	velluscinum.transferNFT(Server, PrK, PuK, AssetID, BankW,
+	velluscinum.transferNFT(Server, PrK, PuK, AssetId, BankW,
 				"description:requesting lend;value_chainCoin:100",requestID);
 	.wait(requestID(PP));
 	
@@ -237,7 +235,7 @@
     if (Choice == "RESERVAR") {
         !comecarNegociacao;
     } elif (Choice == "USAR") {
-        !useReservation;
+        !usarReserva;
     } elif(Choice == "VENDER") {
         !makeVacancyAvailable;
     } else {
@@ -246,13 +244,14 @@
 
 // --- USAR RESERVA ---
 
-+!useReservation : chainServer(Server) & myWallet(PrK, PuK)
++!usarReserva : chainServer(Server) & myWallet(PrK, PuK)
             & managerWallet(ManagerW) & reservaEscolhida(ReservaId) <-
     .print("Escolha de reserva: ", ReservaId);
     velluscinum.transferNFT(Server, PrK, PuK, ReservaId, ManagerW,
-            "description:Using Reservation", usoReserva(TransactionId));
+            "description:Using Reservation", usoReserva);
     .wait(usoReserva(TransactionId));
     .send(manager, tell, querUsarReserva(ReservaId, TransactionId)).
+
 // ----- VALIDACAO -----
 +!stampProcess(TransactionId)[source(self)] : chainServer(Server)
             & myWallet(PrK,PuK) <-
@@ -264,17 +263,25 @@
 +!estacionar[source(manager)] : tempoUso(Min) & idVaga(Id) <-
     .print("--------------------------------------------------------------");
     .print("Estacionando veiculo na vaga ", Id);
-    +parked(Id);
+    +estacionado(Id);
     .wait(Min*10);
     !sairEstacionamento.
 
-+!sairEstacionamento[source(manager)] : true <-
-    .print("Saindo do estacionamento");
-    -parked(Id);
-    .print("--------------------------------------------------------------").
++!estacionarReserva(VagaId)[source(manager)] : tempoUso(Min) <-
+    .print("--------------------------------------------------------------");
+    .print("Estacionando veiculo na vaga ", VagaId);
+    +estacionado(VagaId);
+    .wait(Min*10);
+    .send(manager, tell, querSair(VagaId)).
 
 +!sairEstacionamento[source(self)] : true <-
     .print("Saindo da vaga");
-    -parked(Id);
+    -estacionado(Id);
     .print("--------------------------------------------------------------");
-    !escolher.
+    !recomecar.
+
++!sairEstacionamento[source(manager)] : true <-
+    .print("Saindo da vaga");
+    -estacionado(Id);
+    .print("--------------------------------------------------------------");
+    !recomecar.
