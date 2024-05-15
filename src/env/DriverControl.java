@@ -1,5 +1,6 @@
 import cartago.*;
 
+import java.time.LocalDateTime;
 import java.util.Random;
 
 public class DriverControl extends Artifact {
@@ -15,6 +16,16 @@ public class DriverControl extends Artifact {
         } else {
             defineObsProperty("emprestimoNum", 0);
         }
+    }
+
+    @OPERATION
+    void tempoEstacionado() {
+        Random random = new Random();
+        int useMinutes = random.nextInt(180);
+
+        useMinutes = useMinutes < 20 ? 20 : useMinutes;
+
+        defineObsProperty("tempoUso", useMinutes);
     }
 
     @OPERATION
@@ -34,7 +45,6 @@ public class DriverControl extends Artifact {
                  */
 
                 defineObsProperty("decisao", "COMPRA");
-                defineObsProperty("tempoUso", useMinutes);
                 defineObsProperty("dataUso", "now");
                 definirTipoVaga();
                 break;
@@ -47,7 +57,7 @@ public class DriverControl extends Artifact {
 
                 defineObsProperty("decisao", "RESERVA");
                 defineObsProperty("tempoUso", useMinutes);
-                defineObsProperty("dataUso", "20242504");
+                defineObsProperty("dataUso", definirDataReserva());
                 definirTipoVaga();
                 break;
             }
@@ -58,7 +68,7 @@ public class DriverControl extends Artifact {
                  */
 
                 defineObsProperty("decisao", "COMPRARESERVA");
-                defineObsProperty("dataUso", "20242504");
+                defineObsProperty("dataUso", definirDataReserva());
                 definirTipoVaga();
                 break;
             }
@@ -72,35 +82,38 @@ public class DriverControl extends Artifact {
     @OPERATION
     void escolherReserva(Object[] nftList) {
         Random random = new Random();
-        int escolhaReserva = random.nextInt(3);
+        int escolhaReserva = -1;
         String nft = "";
 
         if (nftList.length != 0) {
             int randomInt = random.nextInt(nftList.length);
             nft = nftList[randomInt].toString();
-            escolhaReserva = 1;
-        } else {
             escolhaReserva = 0;
+        }
+
+        if (escolhaReserva == -1) {
+            // escolhaReserva = random.nextInt(2) + 1;
+            escolhaReserva = 1;
         }
 
         switch (escolhaReserva) {
             case 0: {
                 /*
-                 * primeiro caso: comprar uma reserva de vaga
-                 */
-                log("Comprar uma reserva");
-                defineObsProperty("decisaoReserva", "RESERVAR");
-                break;
-            }
-            case 1: {
-                /*
-                 * segundo caso: usar a reserva para entrar
+                 * primeiro caso: usar a reserva para entrar
                  * no estacionamento
                  */
                 log("Entrar no estacionamento");
                 defineObsProperty("decisaoReserva", "USAR");
                 log("Reserva escolhida: " + nft);
                 defineObsProperty("reservaEscolhida", nft);
+                break;
+            }
+            case 1: {
+                /*
+                 * segundo caso: comprar uma reserva de vaga
+                 */
+                log("Comprar uma reserva");
+                defineObsProperty("decisaoReserva", "RESERVAR");
                 break;
             }
             case 2: {
@@ -115,11 +128,35 @@ public class DriverControl extends Artifact {
         }
     }
 
-    void definirTipoVaga() {
+    private void definirTipoVaga() {
         Random random = new Random();
         int randomInt = random.nextInt(4);
 
         TipoVagaEnum tipoVaga = TipoVagaEnum.values()[randomInt];
         defineObsProperty("tipoVaga", tipoVaga.tipoVaga());
+    }
+
+    private long definirDataReserva() {
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        LocalDateTime dataReserva;
+        long unixTimestamp = 0;
+        Random random = new Random();
+
+        switch (random.nextInt(3)) {
+            case 0:
+                dataReserva = Funcoes.getNextHalfHour(currentDateTime.plusHours(1));
+                unixTimestamp = Funcoes.toUnixTimestamp(dataReserva);
+                break;
+            case 1:
+                dataReserva = Funcoes.getNextHalfHour(currentDateTime.plusDays(1));
+                unixTimestamp = Funcoes.toUnixTimestamp(dataReserva);
+                break;
+            case 2:
+                dataReserva = Funcoes.getNextHalfHour(currentDateTime.plusDays(7));
+                unixTimestamp = Funcoes.toUnixTimestamp(dataReserva);
+                break;
+        }
+
+        return unixTimestamp;
     }
 }

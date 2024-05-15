@@ -19,10 +19,10 @@ public class ParkPricing extends Artifact {
     }
 
     @OPERATION
-    void consultPrice(String tipoVaga, int tempo) {
+    void consultPrice(String tipoVaga) {
         if (tipoVaga != null) {
             TipoVagaEnum typeVaga = TipoVagaEnum.setTipoVaga(tipoVaga);
-            Double precoTabela = getPreco(typeVaga) * (tempo / 60.0);
+            Double precoTabela = getPreco(typeVaga);
             defineObsProperty("precoTabela", precoTabela.intValue());
         }
     }

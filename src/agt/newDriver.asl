@@ -80,6 +80,17 @@
 -!escolher : not listaNFTs(Lista) <-
     +listaNFTs([]);
     escolherReserva([]).
+
++!comecarNegociacao[source(self)] : tipoVaga(Tipo)<-
+    consultPrice(Tipo);
+    ?precoTabela(Price);
+    ?dataUso(Data);
+    
+    .print("Tipo da vaga: ", Tipo);
+    .print("Preco tabelado da vaga: ", Price);
+    .print("Data de uso: ", Data);
+    !consultar.
+
 // ----------------- ACOES CARTEIRA -----------------
 
 +driverWallet(PuK) <- .broadcast(tell, driverWallet(PuK)).
@@ -167,16 +178,8 @@
 
 +valorAPagarUso(Value)[source(manager)] <- !pagarUso(Value).
 
-+!comecarNegociacao[source(self)] : decisao(EscolhaDriver) & tipoVaga(Tipo) 
-            & tempoUso(Tempo) <-
-    consultPrice(Tipo, Tempo);
-    ?precoTabela(Price);
-    ?dataUso(Data);
-    
-    .print("Tipo da vaga: ", Tipo);
-    .print("Tempo de uso: ", Tempo, " minutos");
-    .print("Preco total da vaga: ", Price);
-    .print("Data de uso: ", Data);
++!consultar[source(self)] : tipoVaga(Tipo) & decisao(EscolhaDriver) 
+            & EscolhaDriver == "COMPRA" <-
     .print("Consultando vaga...");
     .send(manager, achieve, consultarVaga(Tipo, Data, EscolhaDriver)).
 
@@ -215,6 +218,12 @@
     .send(manager, tell, querEstacionar(Id)).
 
 // ----- RESERVAR -----
+
++!consultar[source(self)] : tipoVaga(Tipo) & dataUso(Data) & tempoUso(Min) 
+            & decisao(EscolhaDriver) & EscolhaDriver == "RESERVA" <-
+    .print("Tempo de reserva: ", Min);
+    .print("Consultando vaga...");
+    .send(manager, achieve, consultarReserva(Tipo, Data, Min)).
 
 +!reservar(Id, Data) : tempoUso(Min) & chainServer(Server) & myWallet(PrK,PuK) 
             & cryptocurrency(Coin) & managerWallet(Manager) <- 
@@ -260,11 +269,14 @@
 
 // ----------------- ESTACIONAR E DEIXAR ESTACIONAMENTO -----------------
 
-+!estacionar[source(manager)] : tempoUso(Min) & idVaga(Id) <-
++!estacionar[source(manager)] : idVaga(Id) & not tempoUso(Min) <-
     .print("--------------------------------------------------------------");
     .print("Estacionando veiculo na vaga ", Id);
     +estacionado(Id);
+    tempoEstacionado;
+    ?tempoUso(Min);
     .wait(Min*10);
+    -tempoUso(Min);
     !sairEstacionamento.
 
 +!estacionarReserva(VagaId)[source(manager)] : tempoUso(Min) <-
@@ -272,16 +284,17 @@
     .print("Estacionando veiculo na vaga ", VagaId);
     +estacionado(VagaId);
     .wait(Min*10);
+    -tempoUso(Min);
     .send(manager, tell, querSair(VagaId)).
 
-+!sairEstacionamento[source(self)] : true <-
++!sairEstacionamento : true <-
     .print("Saindo da vaga");
     -estacionado(Id);
     .print("--------------------------------------------------------------");
     !recomecar.
 
-+!sairEstacionamento[source(manager)] : true <-
-    .print("Saindo da vaga");
-    -estacionado(Id);
-    .print("--------------------------------------------------------------");
-    !recomecar.
+// +!sairEstacionamento[source(manager)] : true <-
+//     .print("Saindo da vaga");
+//     -estacionado(Id);
+//     .print("--------------------------------------------------------------");
+//     !recomecar.

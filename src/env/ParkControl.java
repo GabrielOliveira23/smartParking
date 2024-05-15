@@ -1,79 +1,101 @@
+import java.time.LocalDateTime;
+
 import cartago.*;
 
 public class ParkControl extends Artifact {
-    static KeyValueObject extractData(Object[] field) {
-        String key = field[0].toString();
-        String value = field[1].toString();
+    private KeyValueObject extrairDados(Object[] campo) {
+        String key = campo[0].toString();
+        String value = campo[1].toString();
         return new KeyValueObject(key, value);
     }
 
-    @OPERATION
-    void verificarVaga(String type, String date, String driverIntention, Object[] metaDataList) {
-        NewVaga vaga = new NewVaga("", "");
+    private boolean verificarData(Long data, Vaga vaga) {
+        for (String[] reserva : vaga.getReservas()) {
+            Long dataInicio = Long.valueOf(reserva[0]);
+            Long dataFinal = Long.valueOf(reserva[1]) + dataInicio;
+            if (Funcoes.isBetweenDates(data, dataInicio, dataFinal)) {
+                return false;
+            } else if (Funcoes.isBetweenDates(data, dataFinal, Funcoes.getDateWithMinutesAfter(dataFinal, 30))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean verificarData(Long dataInicioDesejada, Long dataFinalDesejada, Vaga vaga) {
+        for (String[] reserva : vaga.getReservas()) {
+            Long dataInicio = Long.valueOf(reserva[0]);
+            Long dataFinal = Long.valueOf(reserva[1]) + dataInicio;
+
+            if (Funcoes.hasConflict(dataInicioDesejada, dataFinalDesejada, dataInicio, dataFinal))
+                return false;
+            if (Funcoes.hasConflict(dataInicioDesejada, dataFinalDesejada, dataFinal,
+                    Funcoes.getDateWithMinutesAfter(dataFinal, 30)))
+                return false;
+        }
+        return true;
+    }
+
+    private Vaga preencherVaga(Object[] metaDataList) {
+        Vaga vaga = new Vaga("", "", "");
         for (Object metaData : metaDataList) {
-            KeyValueObject object = extractData((Object[]) metaData);
+            KeyValueObject object = extrairDados((Object[]) metaData);
             if (object.getKey().equals("status")) {
                 vaga.setStatus(object.getValue());
             } else if (object.getKey().equals("tipo")) {
                 vaga.setTipoVaga(object.getValue());
+            } else if (object.getKey().equals("reservas")) {
+                vaga.setReservas(object.getValue());
             }
         }
-        if (vaga.getStatus().equals("")) {
-            vaga.setStatus("disponivel");
-        }
-        switch (driverIntention) {
-            case "COMPRA": {
-                if (vaga.getStatus().equals("disponivel") && vaga.getTipoVaga().equals(type)) {
-                    log("Vaga disponivel: " + vaga.getTipoVaga());
-                    defineObsProperty("vagaDisponivel", true);
-                    defineObsProperty("tipoVaga", vaga.getTipoVaga());
-                }
-                break;
-            }
-            case "RESERVA": {
-                if (vaga.getStatus().equals("disponivel") && vaga.getTipoVaga().equals(type)) {
-                    log("Vaga disponível: " + vaga.getTipoVaga());
-                    defineObsProperty("vagaDisponivel", true);
-                    defineObsProperty("tipoVaga", vaga.getTipoVaga());
-                    defineObsProperty("dataUso", date);
-                }
-                break;
-            }
-            default: {
-                log("Intenção não reconhecida");
-                break;
+        return vaga;
+    }
+
+    @OPERATION
+    void verificarCompra(String type, Object[] metaDataList) {
+        Vaga vacancy = preencherVaga(metaDataList);
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        String date = String.valueOf(Funcoes.toUnixTimestamp(currentDateTime));
+
+        if (vacancy.getStatus().equals("disponivel") && vacancy.getTipoVaga().equals(type)) {
+            if (verificarData(Long.valueOf(date), vacancy)) {
+                log("Vaga disponível: " + vacancy.getTipoVaga());
+                defineObsProperty("vagaDisponivel", true);
+                defineObsProperty("tipoVaga", vacancy.getTipoVaga());
             }
         }
     }
 
     @OPERATION
-    void getCurrentStatus(Object[] dataList) {
-        for (Object data : dataList) {
-            KeyValueObject object = extractData((Object[]) data);
-            if (object.getKey().equals("status")) {
-                defineObsProperty("currentStatus", object.getValue());
-                log("Current status -> " + object.getValue());
-                return;
+    void verificarReserva(String type, long date, int duration, Object[] metaDataList) {
+        Vaga vacancy = preencherVaga(metaDataList);
+
+        if (vacancy.getStatus().equals("disponivel") && vacancy.getTipoVaga().equals(type)) {
+            if (verificarData(date, Funcoes.getDateWithMinutesAfter(date, duration), vacancy)) {
+                log("Vaga disponível: " + vacancy.getTipoVaga());
+                defineObsProperty("vagaDisponivel", true);
+                defineObsProperty("tipoVaga", vacancy.getTipoVaga());
+                defineObsProperty("dataUso", date);
             }
         }
     }
 
     @OPERATION
-    void verificarReserva(Object[] dataList) {
+    void getVacancyType(Object[] dataList) {
         for (Object data : dataList) {
-            KeyValueObject object = extractData((Object[]) data);
-            if (object.getKey().equals("reservationDate")) {
-                defineObsProperty("reservaDisponivel", false);
+            KeyValueObject object = extrairDados((Object[]) data);
+            if (object.getKey().equals("tipoVaga")) {
+                defineObsProperty("tipoVaga", object.getValue());
+                log("Current vacancy type -> " + object.getValue());
                 return;
             }
         }
-        defineObsProperty("reservaDisponivel", true);
     }
 
     @OPERATION
     void acharReserva(String reservationId, String assetId, Object[] metadata) {
         for (Object data : metadata) {
-            KeyValueObject object = extractData((Object[]) data);
+            KeyValueObject object = extrairDados((Object[]) data);
             if (object.getKey().equals("reservationId") && object.getValue().equals(reservationId)) {
                 log("Reserva encontrada: " + reservationId);
                 log("Reserva encontrada: " + assetId);
