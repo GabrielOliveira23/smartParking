@@ -11,8 +11,8 @@ public class ParkControl extends Artifact {
 
     private boolean verificarData(Long data, Vaga vaga) {
         for (String[] reserva : vaga.getReservas()) {
-            Long dataInicio = Long.valueOf(reserva[0]);
-            Long dataFinal = Long.valueOf(reserva[1]) + dataInicio;
+            Long dataInicio = Long.valueOf(reserva[1]);
+            Long dataFinal = Long.valueOf(reserva[2]) + dataInicio;
             if (Funcoes.isBetweenDates(data, dataInicio, dataFinal)) {
                 return false;
             } else if (Funcoes.isBetweenDates(data, dataFinal, Funcoes.getDateWithMinutesAfter(dataFinal, 30))) {
@@ -24,8 +24,8 @@ public class ParkControl extends Artifact {
 
     private boolean verificarData(Long dataInicioDesejada, Long dataFinalDesejada, Vaga vaga) {
         for (String[] reserva : vaga.getReservas()) {
-            Long dataInicio = Long.valueOf(reserva[0]);
-            Long dataFinal = Long.valueOf(reserva[1]) + dataInicio;
+            Long dataInicio = Long.valueOf(reserva[1]);
+            Long dataFinal = Long.valueOf(reserva[2]) + dataInicio;
 
             if (Funcoes.hasConflict(dataInicioDesejada, dataFinalDesejada, dataInicio, dataFinal))
                 return false;
@@ -84,8 +84,8 @@ public class ParkControl extends Artifact {
     void getVacancyType(Object[] dataList) {
         for (Object data : dataList) {
             KeyValueObject object = extrairDados((Object[]) data);
-            if (object.getKey().equals("tipoVaga")) {
-                defineObsProperty("tipoVaga", object.getValue());
+            if (object.getKey().equals("tipo")) {
+                defineObsProperty("vaga", object.getValue());
                 log("Current vacancy type -> " + object.getValue());
                 return;
             }

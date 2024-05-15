@@ -85,7 +85,7 @@
 	!stampProcess(TransactionId);
 	!sendReservation(IdVaga, Data, Tempo).
 
-+!sendReservation(Id, Date, Tempo)[source(self)] : chainServer(Server) & myWallet(PrK, PuK)
++!sendReservation(Id, Data, Tempo)[source(self)] : chainServer(Server) & myWallet(PrK, PuK)
 			& driverWallet(DriverW) <-
 	.print("Reservando vaga...");
 	velluscinum.tokenInfo(Server, Id, metadata, content);
@@ -93,29 +93,31 @@
 	getVacancyType(Content);
 	.wait(vaga(Tipo));
 
-	.concat("type:", Tipo, ";date:", Date, ";duration:", Tempo, Data);
+	.concat("type:", Tipo, ";date:", Data, ";duration:", Tempo, Dados);
 	.concat("description:vacancy reservation", Descricao);
-	velluscinum.deployNFT(Server, PrK, PuK, Data, Descricao, nft);
+	.print("Deploying NFT...");
+	.print("Dados -> ", Dados);
+	velluscinum.deployNFT(Server, PrK, PuK, Dados, Descricao, nft);
 	.wait(nft(ReservaId));
 	
 	-vaga(Tipo);
-	!ocuparVaga(Id, Date, Tempo, Status, ReservaId);
+	!ocuparVaga(Id, Data, Tempo, Status, ReservaId);
 	?ocupation(OcupationId);
 
-	.concat("reservation:", Id, ";date:", Date, ";time:", Tempo, DescricaoReserva);
+	.concat("reservation:", Id, ";date:", Data, ";time:", Tempo, DescricaoReserva);
 	velluscinum.transferNFT(Server, PrK, PuK, ReservaId, DriverW, DescricaoReserva, transfer);
 	.wait(transfer(TransferId));
 	
 	.print("Reserva transferida para motorista");
 	.send(driver, tell, reservaNFT(ReservaId, TransferId)).
 
-+!sendReservation(Id, Date, Tempo)[source(self)] : not driverWallet(DriverW) <-
++!sendReservation(Id, Data, Tempo)[source(self)] : not driverWallet(DriverW) <-
 	.send(driver, askOne, driverWallet(DriverW), Reply);
 	.wait(3000);
 	+Reply;
-	!sendReservation(Id, Date, Tempo).
+	!sendReservation(Id, Data, Tempo).
 
--!sendReservation(Id, Date, Tempo)[source(self)] <-
+-!sendReservation(Id, Data, Tempo)[source(self)] <-
 	.print("Nao foi possivel reservar a vaga").
 
 +!ocuparVaga(Id, Data, Tempo, Status, ReservaId) : chainServer(Server) & myWallet(PrK, PuK)
@@ -123,8 +125,9 @@
 	.print("Ocupando Vaga...");
 	.print("Id -> ", Id);
 	.print("Data -> ", Data);
-	.concat("status:", Status, ";reservationId:", ReservaId, 
-			";reservationDate:", Data, ";reservationTime:", Tempo, Metadata);
+	.concat("status:", Status, ";reservas:[", ReservaId, 
+			",", Data, ",", Tempo, "]", Metadata);
+	.print("Metadata -> ", Metadata);
 	velluscinum.transferNFT(Server, PrK, PuK, Id, PuK, Metadata, ocupation);
 	.wait(ocupation(OcupationId));
 	.print("Vaga Ocupada!").
