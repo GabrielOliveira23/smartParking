@@ -1,9 +1,4 @@
-*.idea
+bin/*
 build/*
-bin
-*.bin
-.gradle/*
-*.gradle
-gradle/*
-*.probe
-*.lock
+*.privateKey
+*.publicKey
