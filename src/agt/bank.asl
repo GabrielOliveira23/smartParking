@@ -9,11 +9,11 @@ chainServer("http://testchain.chon.group:9984/").
 +!carregarCarteira: chainServer(Server) <-
 	.broadcast(tell, chainServer(Server));
 	.print("Obtendo carteira digital");
-	velluscinum.loadWallet(myWallet);
+	.velluscinum.loadWallet(myWallet);
 	.wait(myWallet(PrK,PuK));
 	.broadcast(tell, bankWallet(PuK));
 
-	velluscinum.walletContent(Server, PrK, PuK, content);
+	.velluscinum.walletContent(Server, PrK, PuK, content);
     .wait(content(Content));
 	!findToken(token, set(Content));
 	.wait(smartCoin(Coin));
@@ -39,17 +39,17 @@ chainServer("http://testchain.chon.group:9984/").
 	
 +!criarMoeda: chainServer(Server) & myWallet(PrK, PuK) <- 
 	.print("Criando moeda");
-	velluscinum.deployToken(Server, PrK, PuK, "name:smartCoin", 300, smartCoin);
+	.velluscinum.deployToken(Server, PrK, PuK, "name:smartCoin", 300, smartCoin);
 	+coinBalance(300);
 	.wait(smartCoin(Coin)).
 
 +!lending(ResquestNumber, ClientWallet, Value)[source(Client)]: 
 			smartCoin(Coin) & coinBalance(Amount) & myWallet(PrK,PuK) & chainServer(Server) <-
 	.print("Olá agente ",Client,", Bem vindo ao SmartBank! - Por favor espere enquanto validamos a transferência.");
-	velluscinum.stampTransaction(Server,PrK,PuK,ResquestNumber,loan(Client));
+	.velluscinum.stampTransaction(Server,PrK,PuK,ResquestNumber,loan(Client));
 	if (Amount >= Value) {
 		.print("Transferência validada. Aguarde enquanto processamos a transação.");
-		velluscinum.transferToken(Server,PrK,PuK,Coin,ClientWallet,Value,transactionTransfer);
+		.velluscinum.transferToken(Server,PrK,PuK,Coin,ClientWallet,Value,transactionTransfer);
 		.print("Transação processada com sucesso. Obrigado por escolher o SmartBank!");
 		.send(Client,tell,bankAccount(ok));
 	} else {

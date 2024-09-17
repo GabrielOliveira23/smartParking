@@ -8,7 +8,9 @@
 
 /* Plans */
 
-+decisao(X) : true <- .print("Escolha: ", X).
++decisao(X) : true <- 
+    .print("==============================================================");
+    .print("Escolha: ", X).
 
 +vagaDisponivel(Status)[source(manager)] : Status == true <-
     .wait(3000);
@@ -97,7 +99,7 @@
 
 +!criarCarteira : not myWallet(PrK,PuK) <-
     .print("Obtendo carteira digital...");
-    velluscinum.loadWallet(myWallet);
+    .velluscinum.loadWallet(myWallet);
 	.wait(myWallet(PrK,PuK));
     +driverWallet(PuK).
 
@@ -106,7 +108,7 @@
     -listaNFTs(Lista);
     -coinBalance(Amount);
     .print("Obtendo conteudo da carteira...");
-    velluscinum.walletContent(Server, PrK, PuK, content);
+    .velluscinum.walletContent(Server, PrK, PuK, content);
     .wait(content(Content));
     !findToken(Coin, set(Content));
     !findToken(nft, set(Content)).
@@ -145,11 +147,11 @@
 	.print("Pedindo emprestimo...");
     ?emprestimoNum(Num);
     .concat("nome:motorista;emprestimo:", Num, Data);
-	velluscinum.deployNFT(Server, PrK, PuK, Data,
+	.velluscinum.deployNFT(Server, PrK, PuK, Data,
                 "description:Creating Bank Account", account);
 	.wait(account(AssetId));
 
-	velluscinum.transferNFT(Server, PrK, PuK, AssetId, BankW,
+	.velluscinum.transferNFT(Server, PrK, PuK, AssetId, BankW,
 				"description:requesting lend;value_chainCoin:100",requestID);
 	.wait(requestID(PP));
 	
@@ -200,7 +202,7 @@
             & (coinBalance(Balance) & (Balance >= Valor))<-
     .print("Pagamento em andamento...");
     ?idVaga(IdVaga);
-    velluscinum.transferToken(Server,PrK,PuK,Coin,Manager,Valor,payment);
+    .velluscinum.transferToken(Server,PrK,PuK,Coin,Manager,Valor,payment);
     .wait(payment(TransactionId));
     .print("Pagamento realizado");
     .send(manager, achieve, validarPagamento(TransactionId, IdVaga)).
@@ -229,7 +231,7 @@
             & cryptocurrency(Coin) & managerWallet(Manager) <- 
     .print("Pagando reserva...");
     ?precoTabela(Preco);
-    velluscinum.transferToken(Server, PrK, PuK, Coin, Manager, Preco, payment);
+    .velluscinum.transferToken(Server, PrK, PuK, Coin, Manager, Preco, payment);
     .wait(payment(TransactionId));
     .send(manager, tell, pagouReserva(TransactionId, Id, Data, Min)).
 
@@ -256,7 +258,7 @@
 +!usarReserva : chainServer(Server) & myWallet(PrK, PuK)
             & managerWallet(ManagerW) & reservaEscolhida(ReservaId) <-
     .print("Escolha de reserva: ", ReservaId);
-    velluscinum.transferNFT(Server, PrK, PuK, ReservaId, ManagerW,
+    .velluscinum.transferNFT(Server, PrK, PuK, ReservaId, ManagerW,
             "description:Using Reservation", usoReserva);
     .wait(usoReserva(TransactionId));
     .send(manager, tell, querUsarReserva(ReservaId, TransactionId)).
@@ -265,7 +267,7 @@
 +!stampProcess(TransactionId)[source(self)] : chainServer(Server)
             & myWallet(PrK,PuK) <-
     .print("Validando transferencia...");
-    velluscinum.stampTransaction(Server, PrK, PuK, TransactionId).
+    .velluscinum.stampTransaction(Server, PrK, PuK, TransactionId).
 
 // ----------------- ESTACIONAR E DEIXAR ESTACIONAMENTO -----------------
 
@@ -290,6 +292,11 @@
 +!sairEstacionamento : true <-
     .print("Saindo da vaga");
     -estacionado(Id);
+    -vagaDisponivel;
+    -tempoUso;
+    -dataUso;
+    -tipoVaga;
+    -idVaga;
     .print("--------------------------------------------------------------");
     !recomecar.
 
