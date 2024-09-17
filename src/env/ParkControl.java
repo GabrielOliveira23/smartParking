@@ -1,4 +1,5 @@
 import java.time.LocalDateTime;
+import java.util.List;
 
 import cartago.*;
 
@@ -18,7 +19,7 @@ public class ParkControl extends Artifact {
             } else if (object.getKey().equals("tipo")) {
                 vaga.setTipoVaga(object.getValue());
             } else if (object.getKey().equals("reservas")) {
-                vaga.setReservasNovo(object.getValue());
+                vaga.setReservas(object.getValue());
             }
         }
         return vaga;
@@ -28,10 +29,10 @@ public class ParkControl extends Artifact {
     void verificarCompra(String type, Object[] metaDataList) {
         Vaga vaga = preencherVaga(metaDataList);
         LocalDateTime currentDateTime = LocalDateTime.now();
-        String date = String.valueOf(Funcoes.toUnixTimestamp(currentDateTime));
+        Long date = Funcoes.toUnixTimestamp(currentDateTime);
 
         if (vaga.getStatus().equals("disponivel") && vaga.getTipoVaga().equals(type)) {
-            if (verificarData(Long.valueOf(date), vaga)) {
+            if (verificarData(date, vaga)) {
                 log("Vaga disponível: " + vaga.getTipoVaga());
                 defineObsProperty("vagaDisponivel", true);
                 defineObsProperty("tipoVaga", vaga.getTipoVaga());
@@ -40,14 +41,15 @@ public class ParkControl extends Artifact {
     }
 
     private boolean verificarData(Long data, Vaga vaga) {
-        for (Reserva reserva : vaga.getReservasNova()) {
+        for (Reserva reserva : vaga.getReservas()) {
             Long dataInicio = Long.valueOf(reserva.getData());
             Long dataFinal = reserva.getDataFinalPrevista();
             if (Funcoes.isBetweenDates(data, dataInicio, dataFinal)) {
                 return false;
-            } 
-            // else if (Funcoes.isBetweenDates(data, dataFinal, Funcoes.getDateWithMinutesAfter(dataFinal, 30))) {
-            //     return false;
+            }
+            // else if (Funcoes.isBetweenDates(data, dataFinal,
+            // Funcoes.getDateWithMinutesAfter(dataFinal, 30))) {
+            // return false;
             // }
         }
         return true;
@@ -55,27 +57,39 @@ public class ParkControl extends Artifact {
 
     @OPERATION
     void verificarReserva(String type, long date, int duration, Object[] metaDataList) {
-        Vaga vacancy = preencherVaga(metaDataList);
+        Vaga vaga = preencherVaga(metaDataList);
+        System.out.println("Verificando vaga");
 
-        if (vacancy.getStatus().equals("disponivel") && vacancy.getTipoVaga().equals(type)) {
-            if (verificarData(date, Funcoes.getDateWithMinutesAfter(date, duration), vacancy)) {
-                log("Vaga disponível: " + vacancy.getTipoVaga());
-                defineObsProperty("vagaDisponivel", true);
-                defineObsProperty("tipoVaga", vacancy.getTipoVaga());
-                defineObsProperty("dataUso", date);
-            }
+        if (!vaga.getStatus().equals("disponivel") || !vaga.getTipoVaga().equals(type)) {
+            log("status false");
+            log("Vaga indisponível: " + vaga.getTipoVaga());
+            defineObsProperty("vagaDisponivel", false);
+            return;
         }
+        if (!verificarData(date, Funcoes.getDateWithMinutesAfter(date, duration),
+                vaga.getReservas())) {
+            log("date false");
+            log("Vaga indisponível: " + vaga.getTipoVaga());
+            defineObsProperty("vagaDisponivel", false);
+            return;
+        }
+        log("Vaga disponível: " + vaga.getTipoVaga());
+        defineObsProperty("vagaDisponivel", true);
+        defineObsProperty("tipoVaga", vaga.getTipoVaga());
+        defineObsProperty("dataUso", date);
     }
 
-    private boolean verificarData(Long dataInicioDesejada, Long dataFinalDesejada, Vaga vaga) {
-        for (String[] reserva : vaga.getReservas()) {
-            Long dataInicio = Long.valueOf(reserva[1]);
-            Long dataFinal = Long.valueOf(reserva[2]) + dataInicio;
+    private boolean verificarData(Long dataInicioDesejada, Long dataFinalDesejada,
+            List<Reserva> reservas) {
+        for (Reserva reserva : reservas) {
+            Long dataInicio = Long.valueOf(reserva.getData());
+            Long dataFinalPrevista = reserva.getDataFinalPrevista();
 
-            if (Funcoes.hasConflict(dataInicioDesejada, dataFinalDesejada, dataInicio, dataFinal))
+            if (Funcoes.hasConflict(dataInicioDesejada, dataFinalDesejada, dataInicio,
+                    dataFinalPrevista))
                 return false;
-            if (Funcoes.hasConflict(dataInicioDesejada, dataFinalDesejada, dataFinal,
-                    Funcoes.getDateWithMinutesAfter(dataFinal, 30)))
+            if (Funcoes.hasConflict(dataInicioDesejada, dataFinalDesejada, dataFinalPrevista,
+                    Funcoes.getDateWithMinutesAfter(dataFinalPrevista, 30)))
                 return false;
         }
         return true;
@@ -87,7 +101,6 @@ public class ParkControl extends Artifact {
 
         for (Object data : dataList) {
             KeyValueObject object = extrairDados((Object[]) data);
-            System.out.println(object.getKey() + ":" + object.getValue());
             if (object.getKey().equals("tipo")) {
                 defineObsProperty("tipoVaga", object.getValue());
                 log("Current vacancy type -> " + object.getValue());
@@ -110,7 +123,8 @@ public class ParkControl extends Artifact {
     }
 
     @OPERATION
-    void registrarReserva(Object[] registrado, String status, String reservaId, long data, int tempo) {
+    void registrarReserva(Object[] registrado, String status, String reservaId, long data,
+            int tempo) {
         String registro;
         Reserva reserva = new Reserva(reservaId, String.valueOf(data), tempo);
         for (Object dados : registrado) {
@@ -130,7 +144,7 @@ public class ParkControl extends Artifact {
     @OPERATION
     void acharReserva(String reservationId, String assetId, Object[] metadata) {
         Vaga vaga = preencherVaga(metadata);
-        for (Reserva reserva : vaga.getReservasNova()) {
+        for (Reserva reserva : vaga.getReservas()) {
             if (reservationId.equals(reserva.getId())) {
                 log("Reserva encontrada reservationId: " + reservationId);
                 log("Reserva encontrada assetId: " + assetId);

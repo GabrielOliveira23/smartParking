@@ -4,17 +4,15 @@ import java.util.List;
 public class Vaga {
     private String status;
     private String tipoVaga;
-    private List<String[]> reservas;
-    private List<Reserva> reservasNova;
+    private List<Reserva> reservas;
 
     public Vaga(String status, String tipoVaga) {
         this.status = status;
         this.tipoVaga = tipoVaga;
         this.reservas = new ArrayList<>();
-        this.reservasNova = new ArrayList<>();
     }
 
-    public static List<Reserva> transformReservations(String reservations) {
+    public static List<Reserva> transformarReservas(String reservations) {
         List<Reserva> reservas = new ArrayList<>();
         String[] rows = reservations.split("],\\[");
 
@@ -52,31 +50,23 @@ public class Vaga {
         return listOfStringArrays;
     }
 
-    public List<String[]> getReservas() {
-        return reservas;
+    public void setReservas(String reservasMeta) {
+        this.reservas = transformarReservas(reservasMeta);
+        // for (Reserva reserva : reservasNova) {
+        // reserva.printReservaInfo();
+        // }
     }
 
-    public void setReservasNovo(String reservasMeta) {
-        this.reservasNova = transformReservations(reservasMeta);
-        for (Reserva reserva : reservasNova) {
-            reserva.printReservaInfo();
-        }
-    }
-
-    public List<Reserva> getReservasNova() {
-        return reservasNova;
-    }
-
-    public void setReservas(String reservas) {
-        this.reservas = convertStringToReservations(reservas);
+    public List<Reserva> getReservas() {
+        return this.reservas;
     }
 
     public String getStatus() {
-        return status;
+        return this.status;
     }
 
     public String getTipoVaga() {
-        return tipoVaga;
+        return this.tipoVaga;
     }
 
     public void setStatus(String status) {
@@ -85,14 +75,5 @@ public class Vaga {
 
     public void setTipoVaga(String tipoVaga) {
         this.tipoVaga = tipoVaga;
-    }
-
-    @Override
-    public String toString() {
-        return "Vaga{" +
-                "status='" + this.status + '\'' +
-                ", tipoVaga='" + this.tipoVaga + '\'' +
-                ", reservas=" + this.reservasNova +
-                '}';
     }
 }
