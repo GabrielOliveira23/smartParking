@@ -47,10 +47,6 @@ public class ParkControl extends Artifact {
             if (Funcoes.isBetweenDates(data, dataInicio, dataFinal)) {
                 return false;
             }
-            // else if (Funcoes.isBetweenDates(data, dataFinal,
-            // Funcoes.getDateWithMinutesAfter(dataFinal, 30))) {
-            // return false;
-            // }
         }
         return true;
     }
@@ -63,18 +59,18 @@ public class ParkControl extends Artifact {
         if (!vaga.getStatus().equals("disponivel") || !vaga.getTipoVaga().equals(type)) {
             log("status false");
             log("Vaga indisponível: " + vaga.getTipoVaga());
-            defineObsProperty("vagaDisponivel", false);
+            defineObsProperty("reservaDisponivel", false);
             return;
         }
         if (!verificarData(date, Funcoes.getDateWithMinutesAfter(date, duration),
                 vaga.getReservas())) {
             log("date false");
             log("Vaga indisponível: " + vaga.getTipoVaga());
-            defineObsProperty("vagaDisponivel", false);
+            defineObsProperty("reservaDisponivel", false);
             return;
         }
         log("Vaga disponível: " + vaga.getTipoVaga());
-        defineObsProperty("vagaDisponivel", true);
+        defineObsProperty("reservaDisponivel", true);
         defineObsProperty("tipoVaga", vaga.getTipoVaga());
         defineObsProperty("dataUso", date);
     }
@@ -103,12 +99,10 @@ public class ParkControl extends Artifact {
             KeyValueObject object = extrairDados((Object[]) data);
             if (object.getKey().equals("tipo")) {
                 defineObsProperty("tipoVaga", object.getValue());
-                log("Current vacancy type -> " + object.getValue());
                 isDone++;
             }
             if (object.getKey().equals("status")) {
                 defineObsProperty("statusVaga", object.getValue());
-                log("Current vacancy status -> " + object.getValue());
                 isDone++;
             }
             if (isDone == 2) {
