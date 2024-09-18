@@ -13,11 +13,11 @@
 
 +vagaDisponivel(Status) <-
 	.send(driver, tell, vagaDisponivel(Status));
-	-vagaDisponivel(Status).
+	.abolish(vagaDisponivel(_)).
 
 +idVaga(Id) <- 
 	.send(driver, tell, idVaga(Id));
-	-idVaga(Id).
+	.abolish(idVaga(_)).
 
 +!consultarVaga(TipoVaga, Data, Intencao)[source(driver)]: listaVagas(Lista) <-
 	.send(driver, askOne, driverWallet(DriverW), Reply);
@@ -72,23 +72,19 @@
 
 // verificar as condicoes de (vagaDisponivel(Status) | (vagaDisponivel(Status) & (Status == false)))
 +!disponibilidadeReserva(TipoVaga, Data, Tempo, set([Head|Tail])): chainServer(Server) <-
-	-vagaDisponivel(Status);
 	.print("Verificando disponibilidade da reserva : ", Head);
-	.velluscinum.tokenInfo(Server, Head, data, assetData);
-	.wait(assetData(AssetData));
-	.print("data -> ", AssetData);
-	.abolish(assetData(_));
-	-assetData(AssetData);
 	.velluscinum.tokenInfo(Server, Head, all, content);
 	.wait(content(Content));
 	.print("content -> ", Content);
+	.abolish(vagaDisponivel(_));
+	.abolish(reservaDisponivel(_));
 	verificarReserva(TipoVaga, Data, Tempo, Content);
 	.abolish(content(_));
-	-content(Content);
-	?vagaDisponivel(Status);
+	?reservaDisponivel(Status);
 	.print("VagaDisponivel: ", Status);
 	if (Status == true) {
 		.print("Vaga encontrada para reserva -> ", Head);
+		+vagaDisponivel(true);
 		+idVaga(Head);
 	} else {
 		!disponibilidadeReserva(TipoVaga, Data, Tempo, set(Tail));
@@ -130,8 +126,8 @@
 	.velluscinum.transferNFT(Server, PrK, PuK, ReservaId, DriverW, DescricaoReserva, transfer);
 	.wait(transfer(TransferId));
 	
-	-tipoVaga(TipoAtual);
-	-statusVaga(StatusAtual);
+	.abolish(tipoVaga(_));
+	.abolish(statusVaga(_));
 	
 	.print("Reserva transferida para motorista");
 	.send(driver, tell, reservaNFT(ReservaId, TransferId)).
@@ -156,7 +152,7 @@
 	.velluscinum.transferNFT(Server, PrK, PuK, IdVaga, PuK, Metadados, ocupacao);
 	.wait(ocupacao(IdOcupacao));
 	
-	-reservation(Metadados);
+	.abolish(reservation(_));
 
 	.print("Vaga ocupada com sucesso!").
 
@@ -176,7 +172,7 @@
 	?reservaEncontrada(VagaId);
 	.print("Vaga equivalente da reserva: ", VagaId);
 	!ocuparVaga;
-	-reservaEncontrada(VagaId);
+	.abolish(reservaEncontrada(_));
 	.send(driver, achieve, estacionarReserva(VagaId)).
 
 -!validarReserva(ReservaId) <-
@@ -197,7 +193,7 @@
 	.velluscinum.tokenInfo(Server, VagaId, metadata, dadosVaga);
 	.wait(dadosVaga(Dados));
 	acharReserva(ReservaId, VagaId, Dados);
-	-dadosVaga(Dados).
+	.abolish(dadosVaga(_)).
 
 -!analisarVaga(ReservaId, VagaId, set(V)).
 

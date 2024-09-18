@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.Random;
 
 public class DriverControl extends Artifact {
-    // private Proposta proposta = new Proposta();
     @OPERATION
     void emprestimoCount() {
         ObsProperty emprestimoNum = getObsProperty("emprestimoNum");
@@ -31,12 +30,12 @@ public class DriverControl extends Artifact {
     @OPERATION
     void defineChoice() {
         Random random = new Random();
-        int choice = random.nextInt(3);
+        // int choice = random.nextInt(3);
+        int choice = random.nextInt(2);
         int useMinutes = random.nextInt(180);
 
         useMinutes = useMinutes < 20 ? 20 : useMinutes;
 
-        choice = 1;
         switch (choice) {
             case 0: {
                 /*
@@ -92,8 +91,8 @@ public class DriverControl extends Artifact {
         }
 
         if (escolhaReserva == -1) {
-            // escolhaReserva = random.nextInt(2) + 1;
-            escolhaReserva = 1;
+            escolhaReserva = random.nextInt(2);
+            // escolhaReserva = 1;
         }
 
         switch (escolhaReserva) {

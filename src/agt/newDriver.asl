@@ -13,13 +13,14 @@
     .print("Escolha: ", X).
 
 +vagaDisponivel(Status)[source(manager)] : Status == true <-
+    .print("----------------- printando vaga disponivel -----------------");
     .wait(3000);
     ?idVaga(Id);
-    ?decisao(Choice);
+    ?decisao(EscolhaDriver);
     ?dataUso(Data);
-    if (Choice == "COMPRA") {
-        !estacionar;
-    } elif (Choice == "RESERVA") {
+    if (EscolhaDriver == "COMPRA") {
+        !estacionar(Id);
+    } elif (EscolhaDriver == "RESERVA") {
         !reservar(Id, Data);
     } else {
         .print("Escolha invalida");
@@ -55,11 +56,13 @@
     !escolher.
 
 +!recomecar <-
-    -decisao(Choice);
-    -vagaDisponivel(Status);
-    -reservaEscolhida(ReservaId);
-    -vagaOcupada(Id);
-    -decisarReserva(Choice);
+    .abolish(decisao(_));
+    .abolish(vagaDisponivel(_));
+    .abolish(reservaEscolhida(_));
+    .abolish(vagaOcupada(_));
+    .abolish(decisaoReserva(_));
+    .abolish(dataUso(_));
+    .abolish(tipoVaga(_));
 
     !obterConteudoCarteira;
     .wait(coinBalance(Balance));
@@ -67,13 +70,12 @@
     !escolher.
 
 +!escolher <-
-    -decisao(Choice);
     defineChoice;
-    ?decisao(Choice);
-    if (Choice == "RESERVA") {
+    ?decisao(EscolhaDriver);
+    if (EscolhaDriver == "RESERVA") {
         ?listaNFTs(Lista);
         escolherReserva(Lista);
-    } elif (Choice == "COMPRA") {
+    } elif (EscolhaDriver == "COMPRA") {
         !comecarNegociacao;
     } else {
         .print("Escolha invalida"); 
@@ -105,8 +107,8 @@
 
 +!obterConteudoCarteira : chainServer(Server) & myWallet(PrK, PuK)
             & cryptocurrency(Coin) <-
-    -listaNFTs(Lista);
-    -coinBalance(Amount);
+    .abolish(listaNFTs(_));
+    .abolish(coinBalance(_));
     .print("Obtendo conteudo da carteira...");
     .velluscinum.walletContent(Server, PrK, PuK, content);
     .wait(content(Content));
@@ -118,7 +120,7 @@
     !findToken(Term,set(Tail)).
 
 +!compare(Term,[Type, AssetId, Qtd],set(V)) : (Term == AssetId) <- 
-    .print("Type: ", Type, " ID: ", AssetId);
+    .print("Moeda: ", AssetId);
 	+coinBalance(Qtd);
     .print("Saldo atual: ", Qtd).
 
@@ -158,7 +160,7 @@
 	.print("Lend Contract nr:",PP);
 	.send(bank, achieve, lending(PP, PuK, 100));
     .wait(bankAccount(ok));
-    -pedindoEmprestimo;
+    .abolish(pedindoEmprestimo);
     !obterConteudoCarteira.
 
 +!pedirEmprestimo : pedindoEmprestimo <-
@@ -174,6 +176,7 @@
 
 +vagaOcupada(Id)[source(manager)] <-
     .print("Vaga ocupada");
+    tempoEstacionado;
     ?tempoUso(Min);
     .wait(Min*10);
     !comprar.
@@ -201,11 +204,11 @@
             & myWallet(PrK,PuK) & managerWallet(Manager) 
             & (coinBalance(Balance) & (Balance >= Valor))<-
     .print("Pagamento em andamento...");
-    ?idVaga(IdVaga);
+    ?idVaga(Id);
     .velluscinum.transferToken(Server,PrK,PuK,Coin,Manager,Valor,payment);
     .wait(payment(TransactionId));
     .print("Pagamento realizado");
-    .send(manager, achieve, validarPagamento(TransactionId, IdVaga)).
+    .send(manager, achieve, validarPagamento(TransactionId, Id)).
 
 +!pagarUso(Valor) : cryptocurrency(Coin) & chainServer(Server)
             & myWallet(PrK,PuK) & managerWallet(Manager) 
@@ -214,7 +217,7 @@
     !pedirEmprestimo;
     !pagarUso(Valor).
 
-+!estacionar[source(self)] : tempoUso(Min) & idVaga(Id) <-
++!estacionar(Id)[source(self)] <-
     .print("--------------------------------------------------------------");
     .print("Estacionando veiculo na vaga ", Id);
     .send(manager, tell, querEstacionar(Id)).
@@ -278,7 +281,7 @@
     tempoEstacionado;
     ?tempoUso(Min);
     .wait(Min*10);
-    -tempoUso(Min);
+    .abolish(tempoUso(_));
     !sairEstacionamento.
 
 +!estacionarReserva(VagaId)[source(manager)] : tempoUso(Min) <-
@@ -286,22 +289,17 @@
     .print("Estacionando veiculo na vaga ", VagaId);
     +estacionado(VagaId);
     .wait(Min*10);
-    -tempoUso(Min);
+    .abolish(tempoUso(_));
     .send(manager, tell, querSair(VagaId)).
 
 +!sairEstacionamento : true <-
     .print("Saindo da vaga");
-    -estacionado(Id);
-    -vagaDisponivel;
-    -tempoUso;
-    -dataUso;
-    -tipoVaga;
-    -idVaga;
+    .abolish(estacionado(_));
     .print("--------------------------------------------------------------");
     !recomecar.
 
 // +!sairEstacionamento[source(manager)] : true <-
 //     .print("Saindo da vaga");
-//     -estacionado(Id);
+//     .abolish(estacionado(_));
 //     .print("--------------------------------------------------------------");
 //     !recomecar.
