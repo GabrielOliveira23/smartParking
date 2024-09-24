@@ -27,7 +27,9 @@
     }.
 
 +vagaDisponivel(Status) : Status == false <-
-    .print("Vaga indisponivel").
+    .print("Vaga indisponivel, aguardando...");
+    .print("--------------------------------------------------------------");
+    !recomecar.
 
 +reservaNFT(ReservaId, TransferId)[source(manager)] : listaNFTs(Lista) <- 
     .print("Reserva recebida");
@@ -166,7 +168,7 @@
 +!pedirEmprestimo : pedindoEmprestimo <-
     .print("Ja esta pedindo emprestimo").
 
-+!pedirEmprestimo : true <-
+-!pedirEmprestimo <-
     .print("Erro ao pedir emprestimo");
     .wait(5000);
     !pedirEmprestimo.

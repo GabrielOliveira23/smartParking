@@ -5,9 +5,16 @@
 +listaVagas([ ]).
 
 /* Initial goals */
-!criarCarteira.
+!setup.
 
 /* plans */
+
++!setup <-
+	// .focus("network");
+	// .focus("parkPricing");
+	// makeArtifact(ArtName, )
+	// focus(Id);
+	!criarCarteira.
 
 // ----------------------------- COMMONS ------------------------------
 
@@ -15,9 +22,9 @@
 	.send(driver, tell, vagaDisponivel(Status));
 	.abolish(vagaDisponivel(_)).
 
-+idVaga(Id) <- 
-	.send(driver, tell, idVaga(Id));
-	.abolish(idVaga(_)).
+// +idVaga(Id) <- 
+// 	.send(driver, tell, idVaga(Id));
+// 	.abolish(idVaga(_)).
 
 +!consultarVaga(TipoVaga, Data, Intencao)[source(driver)]: listaVagas(Lista) <-
 	.send(driver, askOne, driverWallet(DriverW), Reply);
@@ -31,12 +38,15 @@
 	.print("Estacionamento fechado!").
 
 // verificar as condicoes de (vagaDisponivel(Status) | (vagaDisponivel(Status) & (Status == false)))
-+!disponibilidadeCompra(TipoVaga, Data, set([Head|Tail])): chainServer(Server) & (not vagaDisponivel(Status) | (vagaDisponivel(Status) & (Status == false))) <-
++!disponibilidadeCompra(TipoVaga, Data, set([Head|Tail])): chainServer(Server) <-
 	.velluscinum.tokenInfo(Server, Head, all, content);
 	.wait(content(Metadata));
 	verificarCompra(TipoVaga, Metadata);
 	?vagaDisponivel(Status);
-	+idVaga(Head).
+	+idVaga(Head);
+	.send(driver, tell, idVaga(Head));
+	.abolish(idVaga(Head)).
+	
 
 -!disponibilidadeCompra(TipoVaga, Data, set([Head|Tail])): chainServer(Server) <-
 	!disponibilidadeCompra(TipoVaga, Data, set(Tail)).
@@ -47,9 +57,13 @@
 
 // -------------------------- COMPRA DIRETA ---------------------------
 
-+valorAPagarUso(Valor) <- .send(driver, tell, valorAPagarUso(Valor)).
++valorAPagarUso(Valor) <-
+	.send(driver, tell, valorAPagarUso(Valor)); 
+	.abolish(valorAPagarUso(_)).
 
-+querEstacionar(Id)[source(driver)] <- !ocuparVaga(Id).
++querEstacionar(Id)[source(driver)] <- 
+	!ocuparVaga(Id); 
+	.abolish(querEstacionar(_)).
 
 +!pagamentoUsoVaga(Tipo, Minutos)[source(driver)] : driverWallet(DriverW) <-
 	.print("Calculando valor...");
@@ -57,20 +71,27 @@
 
 // -------------------------- COMPRAR RESERVA -------------------------
 
-+!consultarReserva(TipoVaga, Data, Tempo)[source(driver)] : listaVagas(Lista) <-
++!consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)] : listaVagas(Lista) <-
+	.print(DriverAgent, " quer consultar vaga");
 	.print("Consultar reserva...");
-	.send(driver, askOne, driverWallet(DriverW), Reply);
+	.send(DriverAgent, askOne, driverWallet(DriverW), Reply);
 	.wait(3000);
 	+Reply;
-	!disponibilidadeReserva(TipoVaga, Data, Tempo, set(Lista)).
+	!disponibilidadeReserva(TipoVaga, Data, Tempo, set(Lista));
+	if (reservaDisponivel(Status) & Status == true) {
+		?idVaga(Id);
+		.send(DriverAgent, tell, idVaga(Id));
+		.send(DriverAgent, tell, vagaDisponivel(true));
+		.abolish(vagaDisponivelId(_));
+		.abolish(reservaDisponivel(_));
+	}.
 
-+!consultarReserva(TipoVaga, Data, Tempo)[source(driver)] : not listaVagas(Lista) <-
++!consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)] : not listaVagas(Lista) <-
 	.print("Estacionamento fechado!").
 
--!consultarReserva(TipoVaga, Data, Tempo)[source(driver)] <-
+-!consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)] <-
 	.print("Nao foi possivel consultar a reserva").
 
-// verificar as condicoes de (vagaDisponivel(Status) | (vagaDisponivel(Status) & (Status == false)))
 +!disponibilidadeReserva(TipoVaga, Data, Tempo, set([Head|Tail])): chainServer(Server) <-
 	.print("Verificando disponibilidade da reserva : ", Head);
 	.velluscinum.tokenInfo(Server, Head, all, content);
@@ -81,10 +102,9 @@
 	verificarReserva(TipoVaga, Data, Tempo, Content);
 	.abolish(content(_));
 	?reservaDisponivel(Status);
-	.print("VagaDisponivel: ", Status);
+	.print("reservaDisponivel: ", Status);
 	if (Status == true) {
 		.print("Vaga encontrada para reserva -> ", Head);
-		+vagaDisponivel(true);
 		+idVaga(Head);
 	} else {
 		!disponibilidadeReserva(TipoVaga, Data, Tempo, set(Tail));
