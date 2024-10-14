@@ -10,7 +10,6 @@ public class DriverControl extends Artifact {
         if (emprestimoNum != null) {
             int count = emprestimoNum.intValue();
             count++;
-            log("Emprestimo num: " + count);
             defineObsProperty("emprestimoNum", count);
         } else {
             defineObsProperty("emprestimoNum", 0);
@@ -18,17 +17,26 @@ public class DriverControl extends Artifact {
     }
 
     @OPERATION
-    void tempoEstacionado() {
+    void tempoEstacionado(OpFeedbackParam<Integer> tempo, int maxOrcamento, double precoTabela) {
         Random random = new Random();
         int useMinutes = random.nextInt(180);
 
         useMinutes = useMinutes < 20 ? 20 : useMinutes;
 
-        defineObsProperty("tempoUso", useMinutes);
+        if (useMinutes / 60 * precoTabela > maxOrcamento) {
+            // useMinutes = (int) (maxOrcamento / precoTabela * 60);
+            // log("Tempo estacionado excedeu o orçamento");
+            return;
+        }
+
+        // log("Tempo estacionado: " + useMinutes + " minutos");
+        tempo.set(useMinutes);
     }
 
     @OPERATION
     void defineChoice() {
+        double num = getObsProperty("numero").floatValue();
+        System.out.println("--------------------> Número: " + num);
         Random random = new Random();
         // int choice = random.nextInt(3);
         int choice = random.nextInt(2);
@@ -36,6 +44,7 @@ public class DriverControl extends Artifact {
 
         useMinutes = useMinutes < 20 ? 20 : useMinutes;
 
+        choice = 0;
         switch (choice) {
             case 0: {
                 /*
@@ -43,8 +52,10 @@ public class DriverControl extends Artifact {
                  * e pagar agora sem proposta, apenas com o preço de tabela
                  */
 
-                defineObsProperty("decisao", "COMPRA");
-                defineObsProperty("dataUso", "now");
+                // defineObsProperty("decisao", "COMPRA");
+                // defineObsProperty("dataUso", "now");
+                signal("decisao", "COMPRA");
+                signal("dataUso", "now");
                 definirTipoVaga();
                 break;
             }
@@ -103,7 +114,7 @@ public class DriverControl extends Artifact {
                  */
                 log("Entrar no estacionamento");
                 defineObsProperty("decisaoReserva", "USAR");
-                log("Reserva escolhida: " + nft);
+                // log("Reserva escolhida: " + nft);
                 defineObsProperty("reservaEscolhida", nft);
                 break;
             }
@@ -133,6 +144,7 @@ public class DriverControl extends Artifact {
 
         TipoVagaEnum tipoVaga = TipoVagaEnum.values()[randomInt];
         defineObsProperty("tipoVaga", tipoVaga.tipoVaga());
+        // signal(agentName, "tipoVaga", tipoVaga.tipoVaga());
     }
 
     private long definirDataReserva() {

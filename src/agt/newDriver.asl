@@ -13,7 +13,6 @@
     .print("Escolha: ", X).
 
 +vagaDisponivel(Status)[source(manager)] : Status == true <-
-    .print("----------------- printando vaga disponivel -----------------");
     .wait(3000);
     ?idVaga(Id);
     ?decisao(EscolhaDriver);
@@ -22,13 +21,12 @@
         !estacionar(Id);
     } elif (EscolhaDriver == "RESERVA") {
         !reservar(Id, Data);
-    } else {
-        .print("Escolha invalida");
     }.
 
-+vagaDisponivel(Status) : Status == false <-
++vagaDisponivel(Status) <-
     .print("Vaga indisponivel, aguardando...");
     .print("--------------------------------------------------------------");
+    .wait(8000);
     !recomecar.
 
 +reservaNFT(ReservaId, TransferId)[source(manager)] : listaNFTs(Lista) <- 
@@ -47,6 +45,8 @@
     .print("Motorista colocou a reserva disponivel").
 
 +!comecar <-
+    lookupArtifact("parkPricing", ParkPricing);
+    focus(ParkPricing);
     .wait(estacionamentoAberto);
     !criarCarteira;
     !obterConteudoCarteira;
@@ -54,7 +54,6 @@
     .send(manager,askOne,managerWallet(Manager),Reply);
     .wait(5000);
     +Reply;
-
     !escolher.
 
 +!recomecar <-
@@ -65,6 +64,7 @@
     .abolish(decisaoReserva(_));
     .abolish(dataUso(_));
     .abolish(tipoVaga(_));
+    .abolish(idVaga(_));
 
     !obterConteudoCarteira;
     .wait(coinBalance(Balance));
@@ -72,29 +72,27 @@
     !escolher.
 
 +!escolher <-
-    defineChoice;
+    // defineChoice;
     ?decisao(EscolhaDriver);
     if (EscolhaDriver == "RESERVA") {
         ?listaNFTs(Lista);
         escolherReserva(Lista);
     } elif (EscolhaDriver == "COMPRA") {
         !comecarNegociacao;
-    } else {
-        .print("Escolha invalida"); 
     }.
 
 -!escolher : not listaNFTs(Lista) <-
     +listaNFTs([]);
     escolherReserva([]).
 
-+!comecarNegociacao[source(self)] : tipoVaga(Tipo)<-
++!comecarNegociacao[source(self)] : tipoVaga(Tipo) <-
     consultPrice(Tipo);
     ?precoTabela(Price);
     ?dataUso(Data);
     
     .print("Tipo da vaga: ", Tipo);
-    .print("Preco tabelado da vaga: ", Price);
     .print("Data de uso: ", Data);
+    // .print("Preco tabelado da vaga: ", Price);
     !consultar.
 
 // ----------------- ACOES CARTEIRA -----------------
@@ -105,15 +103,24 @@
     .print("Obtendo carteira digital...");
     .velluscinum.loadWallet(myWallet);
 	.wait(myWallet(PrK,PuK));
-    +driverWallet(PuK).
+    +driverWallet(PuK);
+    .send(bank,askOne,chainServer(Server),Reply);
+    .wait(5000);
+    +Reply;
+    .send(bank,askOne,cryptocurrency(Coin),ReplyCoin);
+    .wait(5000);
+    +ReplyCoin.
 
 +!obterConteudoCarteira : chainServer(Server) & myWallet(PrK, PuK)
-            & cryptocurrency(Coin) <-
+                & cryptocurrency(Coin) <-
     .abolish(listaNFTs(_));
     .abolish(coinBalance(_));
     .print("Obtendo conteudo da carteira...");
     .velluscinum.walletContent(Server, PrK, PuK, content);
     .wait(content(Content));
+    .send(bank,askOne,bankWallet(BankW),Reply);
+    .wait(5000);
+    +Reply;
     !findToken(Coin, set(Content));
     !findToken(nft, set(Content)).
 
@@ -176,25 +183,24 @@
 // -------------------- CENARIOS --------------------
 // ----- USO -----
 
-+vagaOcupada(Id)[source(manager)] <-
++vagaOcupada(Id)[source(manager)] : coinBalance(Balance) & precoTabela(Price) <-
     .print("Vaga ocupada");
-    tempoEstacionado;
-    ?tempoUso(Min);
-    .wait(Min*10);
-    !comprar.
+    tempoEstacionado(Tempo, Balance, Price);
+    // ?tempoUso(Min);
+    .wait(Tempo*10);
+    !comprar(Tempo).
 
 +valorAPagarUso(Value)[source(manager)] <- !pagarUso(Value).
 
 +!consultar[source(self)] : tipoVaga(Tipo) & decisao(EscolhaDriver) 
             & EscolhaDriver == "COMPRA" <-
-    .print("Consultando vaga...");
-    .send(manager, achieve, consultarVaga(Tipo, Data, EscolhaDriver)).
+    // .print("Consultando vaga...");
+    .send(manager,achieve,consultarVaga(Tipo, Data)).
 
-+!comprar <- 
-    .print("Pagamento da vaga");
-    ?tempoUso(Minutes);
++!comprar(Tempo) <- 
+    // .print("Pagamento da vaga");
     ?tipoVaga(Tipo);
-    .send(manager, achieve, pagamentoUsoVaga(Tipo, Minutes)).
+    .send(manager, achieve, pagamentoUsoVaga(Tipo, Tempo)).
 
 +!pagarUso(Valor) : not managerWallet(Manager) <-
     .wait(5000);
@@ -205,7 +211,7 @@
 +!pagarUso(Valor) : cryptocurrency(Coin) & chainServer(Server)
             & myWallet(PrK,PuK) & managerWallet(Manager) 
             & (coinBalance(Balance) & (Balance >= Valor))<-
-    .print("Pagamento em andamento...");
+    // .print("Pagamento em andamento...");
     ?idVaga(Id);
     .velluscinum.transferToken(Server,PrK,PuK,Coin,Manager,Valor,payment);
     .wait(payment(TransactionId));
@@ -299,9 +305,3 @@
     .abolish(estacionado(_));
     .print("--------------------------------------------------------------");
     !recomecar.
-
-// +!sairEstacionamento[source(manager)] : true <-
-//     .print("Saindo da vaga");
-//     .abolish(estacionado(_));
-//     .print("--------------------------------------------------------------");
-//     !recomecar.

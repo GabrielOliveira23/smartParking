@@ -13,14 +13,16 @@
 */
 
 mas smartParking {
-  agent driver: newDriver.asl {
-    focus: network.parkPricing, network.driverControl 
-  }
+  // agent driver: newDriver.asl {
+  //   focus: network.parkPricing, network.driverControl 
+  // }
 
   agent manager: newManager.asl {
     focus: network.parkPricing, network.parkControl
   }
 
+  // agent test
+  agent creator
   agent bank
 
   workspace network {

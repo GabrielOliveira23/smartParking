@@ -26,7 +26,7 @@ public class ParkControl extends Artifact {
     }
 
     @OPERATION
-    void verificarCompra(String type, Object[] metaDataList) {
+    void verificarCompra(String type, Object[] metaDataList, OpFeedbackParam<Boolean> status) {
         Vaga vaga = preencherVaga(metaDataList);
         LocalDateTime currentDateTime = LocalDateTime.now();
         Long date = Funcoes.toUnixTimestamp(currentDateTime);
@@ -34,10 +34,11 @@ public class ParkControl extends Artifact {
         if (vaga.getStatus().equals("disponivel") && vaga.getTipoVaga().equals(type)) {
             if (verificarData(date, vaga)) {
                 log("Vaga disponível: " + vaga.getTipoVaga());
-                defineObsProperty("vagaDisponivel", true);
-                defineObsProperty("tipoVaga", vaga.getTipoVaga());
+                status.set(true);
+                return;
             }
         }
+        status.set(false);
     }
 
     private boolean verificarData(Long data, Vaga vaga) {
@@ -149,11 +150,12 @@ public class ParkControl extends Artifact {
     }
 
     @OPERATION
-    void calcularValorAPagarUso(String tipoVaga, int minutos) {
+    void calcularValorAPagarUso(String tipoVaga, int minutos, OpFeedbackParam<Double> valorAPagar) {
         double preco = ParkPricing.getPreco(TipoVagaEnum.setTipoVaga(tipoVaga));
         log("Preço da tabela: " + preco);
         preco = Math.round(preco * ((double) minutos / 60));
         log("Valor a pagar: " + preco);
-        defineObsProperty("valorAPagarUso", preco);
+
+        valorAPagar.set(preco);
     }
 }

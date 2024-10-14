@@ -3,16 +3,7 @@
 
 /* Initial beliefs and rules */
 	                     					 
-agents_configs( [["newManager", 1, []],
-				["motorista", 2, [ // Nome e Qtd de Agentes
-				 	[0,[["motocicleta",1],["carro",2],["caminhao",3]]], // Tipo do ve�culo (Nome,ID)	
-				 	[1,[123,132,213,231,312,321]],  // Ordem de preferencia
-				 	[2,[8,10,12,14]], // Preco Desejado
-				 	[3,[1,2,3]], // Setor Desejado
-				 	[4,[1,2,3]], // Tipo de Vaga Desejada
-				 	[5,[1,2,3]]  // Tempo de Uso Desejado
-				]]]
-			   ).
+agents_configs( [["newDriver", 2, []]]).
 				
 
 num_total_agentes(0).
@@ -30,6 +21,8 @@ iter(0).
 /* Plans */
 
 +!criarAgentes : agents_configs(Configs) <-
+	makeArtifact("parkPricing", "ParkPricing", [], PricingId);
+	makeArtifact("driverControl", "DriverControl", [], ControlId);
 	for( .member(Agent, Configs)){
 		.nth(1, Agent, Num_Agents);
 		?num_total_agentes(Num);
