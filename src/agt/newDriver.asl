@@ -2,6 +2,15 @@
 { include("$jacamo/templates/common-moise.asl") }
 
 /* Initial beliefs */
+// hoje
+// amanha
+// depois de amanha
+datasReservas([
+    "1729270800",
+    "1729357200",
+    "1729443600"
+    ]).
+tiposDeVaga(["Longa", "Curta", "LongaCoberta", "CurtaCoberta"]).
 
 /* Initial goals */
 !comecar.
@@ -51,8 +60,8 @@
     !criarCarteira;
     !obterConteudoCarteira;
     .wait(coinBalance(Balance));
-    .send(manager,askOne,managerWallet(Manager),Reply);
-    .wait(5000);
+    .send(manager, askOne, managerWallet(Manager), Reply);
+    .wait(1000);
     +Reply;
     !escolher.
 
@@ -72,18 +81,75 @@
     !escolher.
 
 +!escolher <-
-    // defineChoice;
-    ?decisao(EscolhaDriver);
-    if (EscolhaDriver == "RESERVA") {
-        ?listaNFTs(Lista);
-        escolherReserva(Lista);
-    } elif (EscolhaDriver == "COMPRA") {
+    !definirTipoVaga;
+    ?tipoVaga(Tipo);
+    .random(R);
+    if (R < -.33){
+        .print("Escolha ----> COMPRA");
+        +decisao("COMPRA");
+        +dataUso("now");
         !comecarNegociacao;
+    } elif (R < 1.66){
+        .print("Escolha ----> RESERVA");
+        +decisao("RESERVA");
+        !decidirReserva;
+    } else {
+        // comprar de outro motorista
+        .print("Escolha ----> COMPRARESERVA");
+        +decisao("COMPRARESERVA");
+        // definir data
     }.
 
 -!escolher : not listaNFTs(Lista) <-
-    +listaNFTs([]);
-    escolherReserva([]).
+    +listaNFTs([]).
+
++!definirTipoVaga : tiposDeVaga(Tipos) <-
+    .length(Tipos, Tam);
+    .random(X);
+    Indice = math.floor(Tam*X);
+    .nth(Indice, Tipos, Item);
+    +tipoVaga(Item).
+
++!decidirReserva <-
+    ?listaNFTs(Lista);
+    .random(R);
+    if (R < 1.33) {
+        .print("usar");
+        +decisaoReserva("USAR");
+        !escolherReserva(Lista);
+        !usarReserva;
+    } elif (R < .66) {
+        .print("reservar");
+        +decisaoReserva("RESERVAR");
+        !decidirDataETempo;
+        !comecarNegociacao;
+    } else {
+        .print("vender");
+        +decisaoReserva("VENDER");
+        !makeVacancyAvailable;
+    }.
+
+-!decidirReserva : not listaNFTs(Lista) <-
+    .print("reservar sem lista");
+    +decisaoReserva("RESERVAR");
+    !decidirDataETempo;
+    !comecarNegociacao.
+
+-!decidirReserva <- 
+    .print("Plano de reserva falhou").
+
++!decidirDataETempo <-
+    ?datasReservas(Datas);
+    .length(Datas, Tam);
+    .random(X);
+    Indice = math.floor(Tam*X);
+    .nth(Indice, Datas, Data);
+    +dataUso(Data);
+    
+    .random(Y);
+    Min = math.floor(Y*60);
+    +tempoUso(Min);
+    .print("Data: ", Data, " Minutos: ", Min).
 
 +!comecarNegociacao[source(self)] : tipoVaga(Tipo) <-
     consultPrice(Tipo);
@@ -92,8 +158,11 @@
     
     .print("Tipo da vaga: ", Tipo);
     .print("Data de uso: ", Data);
-    // .print("Preco tabelado da vaga: ", Price);
+    
     !consultar.
+
+-!comecarNegociacao <-
+    .print("Erro ao comecar negociacao").
 
 // ----------------- ACOES CARTEIRA -----------------
 
@@ -104,11 +173,15 @@
     .velluscinum.loadWallet(myWallet);
 	.wait(myWallet(PrK,PuK));
     +driverWallet(PuK);
-    .send(bank,askOne,chainServer(Server),Reply);
-    .wait(5000);
-    +Reply;
-    .send(bank,askOne,cryptocurrency(Coin),ReplyCoin);
-    .wait(5000);
+    
+    .send(bank, askOne, chainServer(Server), Chain);
+    .wait(2000);
+    +Chain;
+    .send(bank, askOne, bankWallet(BankW), Wallet);
+    .wait(2000);
+    +Wallet;
+    .send(bank, askOne, cryptocurrency(Coin), ReplyCoin);
+    .wait(2000);
     +ReplyCoin.
 
 +!obterConteudoCarteira : chainServer(Server) & myWallet(PrK, PuK)
@@ -118,9 +191,6 @@
     .print("Obtendo conteudo da carteira...");
     .velluscinum.walletContent(Server, PrK, PuK, content);
     .wait(content(Content));
-    .send(bank,askOne,bankWallet(BankW),Reply);
-    .wait(5000);
-    +Reply;
     !findToken(Coin, set(Content));
     !findToken(nft, set(Content)).
 
@@ -154,9 +224,14 @@
             & chainServer(Server) & myWallet(PrK,PuK)
             & not pedindoEmprestimo <-
     +pedindoEmprestimo;
-    emprestimoCount;
+    if (emprestimoCount(Num)) {
+        -+emprestimoCount(Num+1);
+    } else {
+        +emprestimoCount(1);
+    }
+
 	.print("Pedindo emprestimo...");
-    ?emprestimoNum(Num);
+    ?emprestimoCount(Num);
     .concat("nome:motorista;emprestimo:", Num, Data);
 	.velluscinum.deployNFT(Server, PrK, PuK, Data,
                 "description:Creating Bank Account", account);
@@ -195,7 +270,7 @@
 +!consultar[source(self)] : tipoVaga(Tipo) & decisao(EscolhaDriver) 
             & EscolhaDriver == "COMPRA" <-
     // .print("Consultando vaga...");
-    .send(manager,achieve,consultarVaga(Tipo, Data)).
+    .send(manager, achieve, consultarVaga(Tipo, Data)).
 
 +!comprar(Tempo) <- 
     // .print("Pagamento da vaga");
@@ -233,7 +308,7 @@
 // ----- RESERVAR -----
 
 +!consultar[source(self)] : tipoVaga(Tipo) & dataUso(Data) & tempoUso(Min) 
-            & decisao(EscolhaDriver) & EscolhaDriver == "RESERVA" <-
+            & decisaoReserva(EscolhaReserva) & EscolhaReserva == "RESERVAR" <-
     .print("Tempo de reserva: ", Min);
     .print("Consultando vaga...");
     .send(manager, achieve, consultarReserva(Tipo, Data, Min)).
@@ -252,19 +327,26 @@
     +Reply;
     !reservar(Id, Data).
 
-+decisaoReserva(Choice) <- 
-    .print("Decisao da reserva: ", Choice);
-    if (Choice == "RESERVAR") {
-        !comecarNegociacao;
-    } elif (Choice == "USAR") {
-        !usarReserva;
-    } elif(Choice == "VENDER") {
-        !makeVacancyAvailable;
-    } else {
-        .print("Escolha invalida");
-    }.
+
+// +decisaoReserva(Choice) <- 
+//     .print("Decisao da reserva: ", Choice);
+//     if (Choice == "RESERVAR") {
+//         !comecarNegociacao;
+//     } elif (Choice == "USAR") {
+//         !usarReserva;
+//     } elif(Choice == "VENDER") {
+//         !makeVacancyAvailable;
+//     } else {
+//         .print("Escolha invalida");
+//     }.
 
 // --- USAR RESERVA ---
++!escolherReserva(Lista) <-
+    .length(Lista, Tam);
+    .random(X);
+    Indice = math.floor(Tam*X);
+    .nth(Indice, Lista, ReservaId);
+    +reservaEscolhida(ReservaId).
 
 +!usarReserva : chainServer(Server) & myWallet(PrK, PuK)
             & managerWallet(ManagerW) & reservaEscolhida(ReservaId) <-

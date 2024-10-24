@@ -53,17 +53,17 @@ public class ParkControl extends Artifact {
     }
 
     @OPERATION
-    void verificarReserva(String type, long date, int duration, Object[] metaDataList) {
+    void verificarReserva(String tipo, String dataString, int duracao, Object[] metaDataList) {
+        Long date = Long.parseLong(dataString);
         Vaga vaga = preencherVaga(metaDataList);
-        System.out.println("Verificando vaga");
 
-        if (!vaga.getStatus().equals("disponivel") || !vaga.getTipoVaga().equals(type)) {
+        if (!vaga.getStatus().equals("disponivel") || !vaga.getTipoVaga().equals(tipo)) {
             log("status false");
             log("Vaga indisponível: " + vaga.getTipoVaga());
             defineObsProperty("reservaDisponivel", false);
             return;
         }
-        if (!verificarData(date, Funcoes.getDateWithMinutesAfter(date, duration),
+        if (!verificarData(date, Funcoes.getDateWithMinutesAfter(date, duracao),
                 vaga.getReservas())) {
             log("date false");
             log("Vaga indisponível: " + vaga.getTipoVaga());
@@ -118,10 +118,10 @@ public class ParkControl extends Artifact {
     }
 
     @OPERATION
-    void registrarReserva(Object[] registrado, String status, String reservaId, long data,
+    void registrarReserva(Object[] registrado, String status, String reservaId, String data,
             int tempo) {
         String registro;
-        Reserva reserva = new Reserva(reservaId, String.valueOf(data), tempo);
+        Reserva reserva = new Reserva(reservaId, data, tempo);
         for (Object dados : registrado) {
             KeyValueObject object = extrairDados((Object[]) dados);
             if (object.getKey().equals("reservas")) {

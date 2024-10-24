@@ -12,13 +12,12 @@ chainServer("http://localhost:9984/").
 	.print("Obtendo carteira digital");
 	.velluscinum.loadWallet(myWallet);
 	.wait(myWallet(PrK,PuK));
-	.broadcast(tell, bankWallet(PuK));
+	+bankWallet(PuK);
 
 	.velluscinum.walletContent(Server, PrK, PuK, content);
     .wait(content(Content));
 	!findToken(token, set(Content));
-	.wait(smartCoin(Coin));
-	.broadcast(tell, cryptocurrency(Coin)).
+	.wait(cryptocurrency(Coin)).
 
 +!findToken(Term,set([Head|Tail])) <- 
     !compare(Term,Head,set(Tail));
@@ -27,25 +26,25 @@ chainServer("http://localhost:9984/").
 +!compare(Term,[Type,AssetID, Qtd],set(V)): (Term  == Type) | (Term == AssetID) <- 
     .print("Type: ", Type, " ID: ", AssetID," Qtd: ", Qtd);
 	-+coinBalance(Qtd);
-	+smartCoin(AssetID).
+	+cryptocurrency(AssetID).
 
 -!compare(Term,[Type,AssetID,Qtd],set(V)) <- .print("The Asset ",AssetID, " is not a ",Term).
 
--!findToken(Type,set([   ])): not smartCoin(Coin) <- 
+-!findToken(Type,set([   ])): not cryptocurrency(Coin) <- 
 	.print("Moeda Nao encontrada");
 	!criarMoeda.
 
--!findToken(Type,set([   ])): smartCoin(Coin) <- 
+-!findToken(Type,set([   ])): cryptocurrency(Coin) <- 
 	.print("Moeda ja na carteira").
 	
 +!criarMoeda: chainServer(Server) & myWallet(PrK, PuK) <- 
 	.print("Criando moeda");
-	.velluscinum.deployToken(Server, PrK, PuK, "name:smartCoin", 300, smartCoin);
+	.velluscinum.deployToken(Server, PrK, PuK, "name:cryptocurrency", 300, cryptocurrency);
 	+coinBalance(300);
-	.wait(smartCoin(Coin)).
+	.wait(cryptocurrency(Coin)).
 
 +!lending(ResquestNumber, ClientWallet, Value)[source(Client)]: 
-			smartCoin(Coin) & coinBalance(Amount) & myWallet(PrK,PuK) & chainServer(Server) <-
+			cryptocurrency(Coin) & coinBalance(Amount) & myWallet(PrK,PuK) & chainServer(Server) <-
 	.print("Olá agente ",Client,", Bem vindo ao SmartBank! - Por favor espere enquanto validamos a transferência.");
 	.velluscinum.stampTransaction(Server,PrK,PuK,ResquestNumber,loan(Client));
 	if (Amount >= Value) {
