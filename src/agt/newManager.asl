@@ -18,10 +18,10 @@
 	// .print("Verificando disponibilidade...");
 	!disponibilidadeCompra(TipoVaga, Data, set(Lista));
 	?vagaDisponivel(Status);
-	.send(DriverAgent, tell, vagaDisponivel(Status));
-	.abolish(vagaDisponivel(_));
 	?idVaga(Head);
+	.send(DriverAgent, achieve, vagaDisponivel(Status));
 	.send(DriverAgent, tell, idVaga(Head));
+	.abolish(vagaDisponivel(_));
 	.abolish(idVaga(_)).
 
 +!consultarVaga(TipoVaga, Data)[source(DriverAgent)] : not listaVagas(Lista) <-
@@ -39,9 +39,11 @@
 	if (Status == true) {
 		+idVaga(Head);
 		+vagaDisponivel(true);
-	}
+	} else {
+		.fail;
+	}.
 
-	?vagaDisponivel(Status).
+	// ?vagaDisponivel(Status).
 
 -!disponibilidadeCompra(TipoVaga, Data, set([Head|Tail])): chainServer(Server) <-
 	!disponibilidadeCompra(TipoVaga, Data, set(Tail)).
@@ -67,7 +69,7 @@
 	// .print("Calculando valor...");
 	calcularValorAPagarUso(Tipo, Minutos, Valor);
 	.print(DriverAgent, " => valor a pagar: ", Valor);
-	.send(DriverAgent,tell,valorAPagarUso(Valor)).
+	.send(DriverAgent, tell, valorAPagarUso(Valor)).
 
 // -------------------------- COMPRAR RESERVA -------------------------
 
@@ -106,31 +108,6 @@
     !consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)]. 
 
 -!processarProximaConsulta.
-
-// +!consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)] : listaVagas(Lista) & not consultandoReserva <-
-// 	.print(DriverAgent, " quer consultar reserva");
-// 	+consultandoReserva;
-// 	// .print("Consultar reserva...");
-// 	.send(DriverAgent, askOne, driverWallet(DriverW), Reply);
-// 	.wait(3000);
-// 	+Reply;
-// 	!disponibilidadeReserva(TipoVaga, Data, Tempo, set(Lista));
-// 	if (reservaDisponivel(Status) & Status == true) {
-// 		.print("Reserva disponivel");
-// 		?idVaga(Id);
-// 		.send(DriverAgent, tell, idVaga(Id));
-// 		.send(DriverAgent, tell, vagaDisponivel(true));
-// 		.abolish(vagaDisponivelId(_));
-// 		.abolish(reservaDisponivel(_));
-// 	} else {
-// 		.send(DriverAgent, tell, vagaDisponivel(false));
-// 		.abolish(reservaDisponivel(_));
-// 		.abolish(vagaDisponivel(_));
-// 	}.
-
-// +!consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)] : not listaVagas(Lista) <-
-// 	.print("Estacionamento fechado!").
-
 
 +!disponibilidadeReserva(TipoVaga, Data, Tempo, set([Head|Tail])): chainServer(Server) <-
 	.print("Verificando disponibilidade da reserva : ", Head);

@@ -251,6 +251,35 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     .abolish(pedindoEmprestimo);
     !obterConteudoCarteira.
 
++!pedirEmprestimo(Valor)[source(self)] : cryptocurrency(Coin) & bankWallet(BankW) 
+            & chainServer(Server) & myWallet(PrK,PuK)
+            & not pedindoEmprestimo <-
+    .print("dinheiro acabou, pedindo emprestimo");
+    +pedindoEmprestimo;
+    .abolish(bankAccount(_));
+
+    if (emprestimoCount(Num)) {
+        -+emprestimoCount(Num+1);
+    } else {
+        +emprestimoCount(1);
+    }
+
+	.print("Pedindo emprestimo, valor: ", Valor);
+    ?emprestimoCount(Num);
+    .concat("nome:motorista;emprestimo:", Num, Data);
+	.velluscinum.deployNFT(Server, PrK, PuK, Data,
+                "description:Creating Bank Account", account);
+	.wait(account(AssetId));
+
+    .concat("description:requesting lend;value_chainCoin:", Valor, Descricao);
+	.velluscinum.transferNFT(Server, PrK, PuK, AssetId, BankW, Descricao, requestID);
+	.wait(requestID(PP));
+	
+	.print("Lend Contract nr:", PP);
+	.send(bank, achieve, lending(PP, PuK, Valor));
+    .wait(bankAccount(ok));
+    .abolish(pedindoEmprestimo).
+
 +!pedirEmprestimo : pedindoEmprestimo <-
     .print("Ja esta pedindo emprestimo").
 
@@ -290,7 +319,7 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 +!pagarUso(Valor) : cryptocurrency(Coin) & chainServer(Server)
             & myWallet(PrK,PuK) & managerWallet(Manager) 
             & (coinBalance(Balance) & (Balance >= Valor))<-
-    // .print("Pagamento em andamento...");
+    .print("Pagamento em andamento...");
     ?idVaga(Id);
     .velluscinum.transferToken(Server,PrK,PuK,Coin,Manager,Valor,payment);
     .wait(payment(TransactionId));
@@ -330,6 +359,12 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     .send(manager,askOne,managerWallet(Manager),Reply);
     +Reply;
     !reservar(Id, Data).
+
+-!reservar(Id, Data) <-
+    .print("Erro ao reservar, saldo insuficiente");
+    !pedirEmprestimo;
+    !reservar(Id, Data);
+    +semSaldo.
 
 // --- USAR RESERVA ---
 +!escolherReserva(Lista) <-
