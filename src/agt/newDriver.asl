@@ -10,18 +10,16 @@ datasReservas([
     "1729357200",
     "1729443600"
     ]).
-tiposDeVaga(["Longa", "Curta", "LongaCoberta", "CurtaCoberta"]).
+tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 
 /* Initial goals */
 !comecar.
 
 /* Plans */
 
-+decisao(X) : true <- 
-    .print("==============================================================");
-    .print("Escolha: ", X).
++decisao(X) <- .print("Escolha: ", X).
 
-+vagaDisponivel(Status)[source(manager)] : Status == true <-
++!vagaDisponivel(Status)[source(manager)] : Status == true <-
     .wait(3000);
     ?idVaga(Id);
     ?decisao(EscolhaDriver);
@@ -32,7 +30,7 @@ tiposDeVaga(["Longa", "Curta", "LongaCoberta", "CurtaCoberta"]).
         !reservar(Id, Data);
     }.
 
-+vagaDisponivel(Status) <-
++!vagaDisponivel(Status)[source(manager)] : Status == false <-
     .print("Vaga indisponivel, aguardando...");
     .print("--------------------------------------------------------------");
     .wait(8000);
@@ -54,9 +52,10 @@ tiposDeVaga(["Longa", "Curta", "LongaCoberta", "CurtaCoberta"]).
     .print("Motorista colocou a reserva disponivel").
 
 +!comecar <-
-    lookupArtifact("parkPricing", ParkPricing);
-    focus(ParkPricing);
     .wait(estacionamentoAberto);
+    .send(manager, askOne, precoTabelaVagas(Tabela), TabelaVagas);
+    .wait(2000);
+    +TabelaVagas;
     !criarCarteira;
     !obterConteudoCarteira;
     .wait(coinBalance(Balance));
@@ -67,13 +66,13 @@ tiposDeVaga(["Longa", "Curta", "LongaCoberta", "CurtaCoberta"]).
 
 +!recomecar <-
     .abolish(decisao(_));
-    .abolish(vagaDisponivel(_));
     .abolish(reservaEscolhida(_));
     .abolish(vagaOcupada(_));
     .abolish(decisaoReserva(_));
     .abolish(dataUso(_));
     .abolish(tipoVaga(_));
     .abolish(idVaga(_));
+    .abolish(precoVaga(_));
 
     !obterConteudoCarteira;
     .wait(coinBalance(Balance));
@@ -81,15 +80,16 @@ tiposDeVaga(["Longa", "Curta", "LongaCoberta", "CurtaCoberta"]).
     !escolher.
 
 +!escolher <-
+    .print("==============================================================");
     !definirTipoVaga;
     ?tipoVaga(Tipo);
     .random(R);
-    if (R < -.33){
+    if (R < .5){
         .print("Escolha ----> COMPRA");
         +decisao("COMPRA");
         +dataUso("now");
         !comecarNegociacao;
-    } elif (R < 1.66){
+    } elif (R <= 1){
         .print("Escolha ----> RESERVA");
         +decisao("RESERVA");
         !decidirReserva;
@@ -113,12 +113,12 @@ tiposDeVaga(["Longa", "Curta", "LongaCoberta", "CurtaCoberta"]).
 +!decidirReserva <-
     ?listaNFTs(Lista);
     .random(R);
-    if (R < 1.33) {
+    if (R < .5) {
         .print("usar");
         +decisaoReserva("USAR");
         !escolherReserva(Lista);
         !usarReserva;
-    } elif (R < .66) {
+    } elif (R <= 1) {
         .print("reservar");
         +decisaoReserva("RESERVAR");
         !decidirDataETempo;
@@ -147,13 +147,13 @@ tiposDeVaga(["Longa", "Curta", "LongaCoberta", "CurtaCoberta"]).
     +dataUso(Data);
     
     .random(Y);
-    Min = math.floor(Y*60);
+    Min = math.floor(Y*100+20);
     +tempoUso(Min);
     .print("Data: ", Data, " Minutos: ", Min).
 
 +!comecarNegociacao[source(self)] : tipoVaga(Tipo) <-
-    consultPrice(Tipo);
-    ?precoTabela(Price);
+    !consultarPreco(Tipo);
+    ?precoTabela(Preco);
     ?dataUso(Data);
     
     .print("Tipo da vaga: ", Tipo);
@@ -163,6 +163,10 @@ tiposDeVaga(["Longa", "Curta", "LongaCoberta", "CurtaCoberta"]).
 
 -!comecarNegociacao <-
     .print("Erro ao comecar negociacao").
+
++!consultarPreco(TipoVaga) : precoTabelaVagas(Tabela) <-
+    .member([TipoVaga, Preco], Tabela);
+    -+precoTabela(Preco).
 
 // ----------------- ACOES CARTEIRA -----------------
 
@@ -327,19 +331,6 @@ tiposDeVaga(["Longa", "Curta", "LongaCoberta", "CurtaCoberta"]).
     +Reply;
     !reservar(Id, Data).
 
-
-// +decisaoReserva(Choice) <- 
-//     .print("Decisao da reserva: ", Choice);
-//     if (Choice == "RESERVAR") {
-//         !comecarNegociacao;
-//     } elif (Choice == "USAR") {
-//         !usarReserva;
-//     } elif(Choice == "VENDER") {
-//         !makeVacancyAvailable;
-//     } else {
-//         .print("Escolha invalida");
-//     }.
-
 // --- USAR RESERVA ---
 +!escolherReserva(Lista) <-
     .length(Lista, Tam);
@@ -360,7 +351,15 @@ tiposDeVaga(["Longa", "Curta", "LongaCoberta", "CurtaCoberta"]).
 +!stampProcess(TransactionId)[source(self)] : chainServer(Server)
             & myWallet(PrK,PuK) <-
     .print("Validando transferencia...");
+    // .print("Server: ", Server);
+    // .print("PrK: ", PrK);
+    // .print("PuK: ", PuK);
+    // .print("TransactionId: ", TransactionId);
     .velluscinum.stampTransaction(Server, PrK, PuK, TransactionId).
+
+-!stampProcess(TransactionId) <- 
+    .print("Erro ao validar transferencia, tentando novamente");
+    !stampProcess(TransactionId).
 
 // ----------------- ESTACIONAR E DEIXAR ESTACIONAMENTO -----------------
 
@@ -374,12 +373,12 @@ tiposDeVaga(["Longa", "Curta", "LongaCoberta", "CurtaCoberta"]).
     .abolish(tempoUso(_));
     !sairEstacionamento.
 
-+!estacionarReserva(VagaId)[source(manager)] : tempoUso(Min) <-
++!estacionarReserva(VagaId)[source(manager)] <-
     .print("--------------------------------------------------------------");
     .print("Estacionando veiculo na vaga ", VagaId);
     +estacionado(VagaId);
-    .wait(Min*10);
-    .abolish(tempoUso(_));
+    .wait(3000);
+    // .abolish(tempoUso(_));
     .send(manager, tell, querSair(VagaId)).
 
 +!sairEstacionamento : true <-

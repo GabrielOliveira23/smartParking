@@ -22,8 +22,8 @@ public class Reserva {
     }
 
     public static String tratarRegistro(KeyValueObject registro, Reserva novaReserva, String status) {
-        return "status:" + status + ";reservas:[["
-                + registro.getKey().substring(0, registro.getKey().length() - 1) + ",[" + novaReserva.getId() + ","
+        return "status:" + status + ";reservas:["
+                + registro.getValue().substring(1, registro.getValue().length() - 1) + ",[" + novaReserva.getId() + ","
                 + novaReserva.data + "," + novaReserva.tempoUso + "]]";
     }
 

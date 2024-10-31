@@ -71,36 +71,75 @@
 
 // -------------------------- COMPRAR RESERVA -------------------------
 
-+!consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)] : listaVagas(Lista) <-
-	.print(DriverAgent, " quer consultar reserva");
-	// .print("Consultar reserva...");
-	.send(DriverAgent, askOne, driverWallet(DriverW), Reply);
-	.wait(3000);
-	+Reply;
-	!disponibilidadeReserva(TipoVaga, Data, Tempo, set(Lista));
-	if (reservaDisponivel(Status) & Status == true) {
-		.print("Reserva disponivel");
-		?idVaga(Id);
-		.send(DriverAgent, tell, idVaga(Id));
-		.send(DriverAgent, tell, vagaDisponivel(true));
-		.abolish(vagaDisponivelId(_));
-		.abolish(reservaDisponivel(_));
-	}.
++!consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)] : listaVagas(Lista) & not consultandoReserva <- 
+    .print(DriverAgent, " quer consultar reserva");
+    +consultandoReserva(DriverAgent, TipoVaga, Data, Tempo);
+    .send(DriverAgent, askOne, driverWallet(DriverW), Reply);
+    .wait(3000);
+    +Reply;
+    !disponibilidadeReserva(TipoVaga, Data, Tempo, set(Lista));
+	?reservaDisponivel(Status);
+    if (Status == true) {
+        .print("Reserva disponível");
+        ?idVaga(Id);
+        .send(DriverAgent, tell, idVaga(Id));
+        .send(DriverAgent, achieve, vagaDisponivel(true));
+    } else {
+		.print("Reserva nao disponivel");
+        .send(DriverAgent, achieve, vagaDisponivel(false));
+    };
+    -consultandoReserva(DriverAgent, TipoVaga, Data, Tempo);
+    .abolish(reservaDisponivel(_));
+    .abolish(vagaDisponivel(_));
+    !processarProximaConsulta.
 
-+!consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)] : not listaVagas(Lista) <-
-	.print("Estacionamento fechado!").
++!consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)] : consultandoReserva(_, _, _, _) <- 
+    .print(DriverAgent, " quer consultar, mas uma consulta já está em andamento. Adicionando à fila de pendências.");
+    ?consultasPendentes(Pendentes);
+    -consultasPendentes(Pendentes);
+    +consultasPendentes([[DriverAgent, TipoVaga, Data, Tempo] | Pendentes]).
 
--!consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)] <-
-	.print("Nao foi possivel consultar a reserva").
++!processarProximaConsulta : true <- 
+    ?consultasPendentes([ProximaConsulta | Restantes]);
+    -consultasPendentes([ProximaConsulta | Restantes]);
+    ProximaConsulta = [DriverAgent, TipoVaga, Data, Tempo];
+    !consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)]. 
+
+-!processarProximaConsulta.
+
+// +!consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)] : listaVagas(Lista) & not consultandoReserva <-
+// 	.print(DriverAgent, " quer consultar reserva");
+// 	+consultandoReserva;
+// 	// .print("Consultar reserva...");
+// 	.send(DriverAgent, askOne, driverWallet(DriverW), Reply);
+// 	.wait(3000);
+// 	+Reply;
+// 	!disponibilidadeReserva(TipoVaga, Data, Tempo, set(Lista));
+// 	if (reservaDisponivel(Status) & Status == true) {
+// 		.print("Reserva disponivel");
+// 		?idVaga(Id);
+// 		.send(DriverAgent, tell, idVaga(Id));
+// 		.send(DriverAgent, tell, vagaDisponivel(true));
+// 		.abolish(vagaDisponivelId(_));
+// 		.abolish(reservaDisponivel(_));
+// 	} else {
+// 		.send(DriverAgent, tell, vagaDisponivel(false));
+// 		.abolish(reservaDisponivel(_));
+// 		.abolish(vagaDisponivel(_));
+// 	}.
+
+// +!consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)] : not listaVagas(Lista) <-
+// 	.print("Estacionamento fechado!").
+
 
 +!disponibilidadeReserva(TipoVaga, Data, Tempo, set([Head|Tail])): chainServer(Server) <-
 	.print("Verificando disponibilidade da reserva : ", Head);
 	.velluscinum.tokenInfo(Server, Head, all, content);
 	.wait(content(Content));
-	.print("content -> ", Content);
 	.abolish(vagaDisponivel(_));
 	.abolish(reservaDisponivel(_));
 	
+	// .print("Content: ", Content);
 	verificarReserva(TipoVaga, Data, Tempo, Content);
 	.abolish(content(_));
 	?reservaDisponivel(Status);
@@ -119,7 +158,7 @@
 	!disponibilidadeReserva(TipoVaga, Data, Tempo, set(Tail)).
 
 -!disponibilidadeReserva(TipoVaga, Data, Tempo, set([ ])) <-
-	+vagaDisponivel(false);
+	+reservaDisponivel(false);
 	.print("percorreu todas as vagas").
 
 +pagouReserva(TransactionId, IdVaga, Data, Tempo)[source(DriverAgent)] <-
@@ -175,8 +214,12 @@
 	.velluscinum.tokenInfo(Server, IdVaga, metadata, content);
 	.wait(content(Registrado));
 
+	// .print("Registrado: ", Registrado);
+
 	registrarReserva(Registrado, Status, ReservaId, Data, Tempo);
 	?reservation(Metadados);
+
+	// .print("Metadados: ", Metadados);
 	
 	.velluscinum.transferNFT(Server, PrK, PuK, IdVaga, PuK, Metadados, ocupacao);
 	.wait(ocupacao(IdOcupacao));
@@ -304,7 +347,13 @@
 
 +!abrirEstacionamento : listaVagas(Vagas) <-
 	.print("Estacionamento Aberto!");
-	.broadcast(tell, estacionamentoAberto).
+	.broadcast(tell, estacionamentoAberto);
+	.broadcast(tell, precoTabelaVagas([
+					["Curta", 10],
+					["Longa", 14],
+					["CurtaCoberta", 18],
+					["LongaCoberta", 20]
+					])).
 
 +!listarVagas: chainServer(Server) & myWallet(PrK,PuK) <- 
 	.velluscinum.deployNFT(Server, PrK, PuK, "name:Vaga1;tipo:Curta", "status:disponivel", account);

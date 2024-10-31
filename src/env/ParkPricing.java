@@ -27,17 +27,6 @@ public class ParkPricing extends Artifact {
         }
     }
 
-    
-// levar para driver
-    @OPERATION
-    void defineVagaType() {
-        Random random = new Random();
-        int randomInt = random.nextInt(4);
-
-        TipoVagaEnum tipoVaga = TipoVagaEnum.values()[randomInt];
-        defineObsProperty("tipoVaga", tipoVaga.tipoVaga());
-    }
-
     @OPERATION
     void consultTable(String tipoVaga) {
         if (tipoVaga != null) {

@@ -58,15 +58,15 @@ public class ParkControl extends Artifact {
         Vaga vaga = preencherVaga(metaDataList);
 
         if (!vaga.getStatus().equals("disponivel") || !vaga.getTipoVaga().equals(tipo)) {
-            log("status false");
-            log("Vaga indisponível: " + vaga.getTipoVaga());
+            // log("status false");
+            // log("Vaga indisponível: " + vaga.getTipoVaga());
             defineObsProperty("reservaDisponivel", false);
             return;
         }
         if (!verificarData(date, Funcoes.getDateWithMinutesAfter(date, duracao),
                 vaga.getReservas())) {
-            log("date false");
-            log("Vaga indisponível: " + vaga.getTipoVaga());
+            // log("date false");
+            // log("Vaga indisponível: " + vaga.getTipoVaga());
             defineObsProperty("reservaDisponivel", false);
             return;
         }
