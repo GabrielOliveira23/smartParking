@@ -1,4 +1,13 @@
 bin/*
 build/*
+bin
+*.bin
+.gradle/*
+*.gradle
+gradle/*
+*.probe
+*.lock
+bin/*
+build/*
 *.privateKey
 *.publicKey

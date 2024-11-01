@@ -2,7 +2,7 @@
    Project smartParking
 
    Gradle build file for JaCaMo Applications
-   janeiro 03, 2024 - 17:26:10
+   September 24, 2024 - 19:22:29
 */
 
 defaultTasks 'run'
