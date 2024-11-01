@@ -13,22 +13,16 @@
 */
 
 mas smartParking {
-  agent driver: newDriver.asl {
-    focus: network.parkPricing, network.driverControl 
-  }
+  // agent driver: newDriver.asl {
+  //   focus: network.parkPricing, network.driverControl 
+  // }
 
   agent manager: newManager.asl {
     focus: network.parkPricing, network.parkControl
   }
 
-  // agent driver: driver.asl {
-  //   focus: network.parkPricing, network.driverControl 
-  // }
-  
-  // agent manager: manager.asl {
-  //   focus: network.parkControl, network.parkPricing
-  // }
-
+  // agent test
+  agent creator
   agent bank
 
   workspace network {
@@ -37,5 +31,5 @@ mas smartParking {
     artifact parkPricing: ParkPricing
   }
 
-  uses package: velluscinum "com.github.chon-group:velluscinum-jcm:1.2"
+  uses package: velluscinum "com.github.chon-group:Velluscinum:+"
 }
