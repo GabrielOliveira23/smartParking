@@ -39,8 +39,8 @@ chainServer("http://localhost:9984/").
 	
 +!criarMoeda: chainServer(Server) & myWallet(PrK, PuK) <- 
 	.print("Criando moeda");
-	.velluscinum.deployToken(Server, PrK, PuK, "name:cryptocurrency", 300, cryptocurrency);
-	+coinBalance(300);
+	.velluscinum.deployToken(Server, PrK, PuK, "name:cryptocurrency", 100000, cryptocurrency);
+	+coinBalance(100000);
 	.wait(cryptocurrency(Coin)).
 
 +!lending(ResquestNumber, ClientWallet, Value)[source(Client)]: 

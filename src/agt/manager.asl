@@ -140,7 +140,7 @@
 
 +pagouReserva(TransactionId, IdVaga, Data, Tempo)[source(DriverAgent)] <-
 	!stampProcess(TransactionId);
-	!sendReservation(IdVaga, Data, Tempo);
+	!sendReservation(IdVaga, Data, Tempo, DriverAgent);
 	?reservaNFT(ReservaId, TransferId);
 	.send(DriverAgent, tell, reservaNFT(ReservaId, TransferId));
 	.abolish(reservaNFT(_)).
@@ -148,8 +148,8 @@
 -pagouReserva(TransactionId, IdVaga, Data, Tempo)[source(DriverAgent)] <-
 	.print("Reserva nao gerada").
 
-+!sendReservation(IdVaga, Data, Tempo)[source(self)] : chainServer(Server) & myWallet(PrK, PuK)
-			& driverWallet(DriverW) <-
++!sendReservation(IdVaga, Data, Tempo, DriverAgent)[source(self)] : chainServer(Server) & myWallet(PrK, PuK) 
+				& driverWallet(DriverW)[source(Agente)] & Agente = DriverAgent  <-
 	.abolish(nft(_));
 	.abolish(transfer(_));
 
@@ -177,13 +177,13 @@
 	.abolish(tipoVaga(_));
 	.abolish(statusVaga(_)).
 
-+!sendReservation(IdVaga, Data, Tempo)[source(self)] : not driverWallet(DriverW) <-
++!sendReservation(IdVaga, Data, Tempo, DriverAgent)[source(self)] : not driverWallet(DriverW)[source(DriverAgent)] <-
 	.send(driver, askOne, driverWallet(DriverW), Reply);
 	.wait(3000);
 	+Reply;
-	!sendReservation(IdVaga, Data, Tempo).
+	!sendReservation(IdVaga, Data, Tempo, DriverAgent).
 
--!sendReservation(IdVaga, Data, Tempo)[source(self)] <-
+-!sendReservation(IdVaga, Data, Tempo, DriverAgent)[source(self)] <-
 	.print("Nao foi possivel reservar a vaga").
 
 +!ocuparVaga(IdVaga, Data, Tempo, Status, ReservaId) : chainServer(Server) & myWallet(PrK, PuK) <-

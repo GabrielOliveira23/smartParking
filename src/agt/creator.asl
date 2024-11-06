@@ -3,7 +3,7 @@
 
 /* Initial beliefs and rules */
 	                     					 
-agents_configs( [["newDriver", 1, []]]).
+agents_configs( [["driver", 2, []]]).
 				
 
 num_total_agentes(0).

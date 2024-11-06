@@ -17,7 +17,7 @@ mas smartParking {
   //   focus: network.parkPricing, network.driverControl 
   // }
 
-  agent manager: newManager.asl {
+  agent manager {
     focus: network.parkPricing, network.parkControl
   }
 

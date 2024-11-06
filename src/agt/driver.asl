@@ -170,7 +170,7 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 
 // ----------------- ACOES CARTEIRA -----------------
 
-+driverWallet(PuK) <- .broadcast(tell, driverWallet(PuK)).
++driverWallet(PuK) <- .send(manager, tell, driverWallet(PuK)).
 
 +!criarCarteira : not myWallet(PrK,PuK) <-
     .print("Obtendo carteira digital...");
@@ -236,8 +236,13 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 
 	.print("Pedindo emprestimo...");
     ?emprestimoCount(Num);
-    .concat("nome:motorista;emprestimo:", Num, Data);
-	.velluscinum.deployNFT(Server, PrK, PuK, Data,
+    .concat("nome:motorista;emprestimo:", Num, Dados);
+    .print("Server: ", Server);
+    .print("PrK: ", PrK);
+    .print("PuK: ", PuK);
+    .print("Dados: ", Dados);
+
+	.velluscinum.deployNFT(Server, PrK, PuK, Dados,
                 "description:Creating Bank Account", account);
 	.wait(account(AssetId));
 
