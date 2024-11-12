@@ -14,8 +14,6 @@
 	.send(DriverAgent, askOne, driverWallet(DriverW), Reply);
 	.wait(3000);
 	+Reply;
-	// +driverIntention(Intencao); // talvez seja inutil
-	// .print("Verificando disponibilidade...");
 	!disponibilidadeCompra(TipoVaga, Data, set(Lista));
 	?vagaDisponivel(Status);
 	?idVaga(Head);
@@ -167,6 +165,8 @@
 
 	!ocuparVaga(IdVaga, Data, Tempo, StatusAtual, ReservaId);
 	?ocupacao(IdOcupacao);
+
+	.print("Enviando reserva para: ", DriverAgent);
 
 	.concat("reservation:", ReservaId, ";type:", TipoAtual, ";date:", Data, ";time:", Tempo, DescricaoReserva);
 	.velluscinum.transferNFT(Server, PrK, PuK, ReservaId, DriverW, DescricaoReserva, transfer);

@@ -28,7 +28,8 @@ chainServer("http://localhost:9984/").
 	-+coinBalance(Qtd);
 	+cryptocurrency(AssetID).
 
--!compare(Term,[Type,AssetID,Qtd],set(V)) <- .print("The Asset ",AssetID, " is not a ",Term).
+-!compare(Term,[Type,AssetID,Qtd],set(V)).
+	// .print("The Asset ",AssetID, " is not a ",Term).
 
 -!findToken(Type,set([   ])): not cryptocurrency(Coin) <- 
 	.print("Moeda Nao encontrada");
