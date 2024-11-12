@@ -1,7 +1,7 @@
 // Agent bank in project chefBankGlutton
 /* Initial beliefs and rules */
-// chainServer("http://testchain.chon.group:9984/").
-chainServer("http://localhost:9984/").
+chainServer("http://testchain.chon.group:9984/").
+// chainServer("http://localhost:9984/").
 
 /* Initial goals */
 !carregarCarteira.
