@@ -84,7 +84,7 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     !definirTipoVaga;
     ?tipoVaga(Tipo);
     .random(R);
-    if (R < -.5){
+    if (R < .5){
         .print("Escolha ----> COMPRA");
         +decisao("COMPRA");
         +dataUso("now");
@@ -94,6 +94,7 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
         +decisao("RESERVA");
         !decidirReserva;
     } else {
+        // verificar isso
         // comprar de outro motorista
         .print("Escolha ----> COMPRARESERVA");
         +decisao("COMPRARESERVA");
@@ -113,13 +114,13 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 +!decidirReserva <-
     ?listaNFTs(Lista);
     .random(R);
-    if (R < -.33) {
+    if (R < .33) {
         .print("usar");
         +decisaoReserva("USAR");
         !escolherReserva(Lista);
         ?reservaEscolhida(ReservaId);
         !usarReserva;
-    } elif (R < .5) {
+    } elif (R < .66) {
         .print("reservar");
         +decisaoReserva("RESERVAR");
         !verificarReservasDeMotoristas;
