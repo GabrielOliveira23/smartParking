@@ -58,15 +58,11 @@ public class ParkControl extends Artifact {
         Vaga vaga = preencherVaga(metaDataList);
 
         if (!vaga.getStatus().equals("disponivel") || !vaga.getTipoVaga().equals(tipo)) {
-            // log("status false");
-            // log("Vaga indisponível: " + vaga.getTipoVaga());
             defineObsProperty("reservaDisponivel", false);
             return;
         }
         if (!verificarData(date, Funcoes.getDateWithMinutesAfter(date, duracao),
                 vaga.getReservas())) {
-            // log("date false");
-            // log("Vaga indisponível: " + vaga.getTipoVaga());
             defineObsProperty("reservaDisponivel", false);
             return;
         }
@@ -126,13 +122,13 @@ public class ParkControl extends Artifact {
             KeyValueObject object = extrairDados((Object[]) dados);
             if (object.getKey().equals("reservas")) {
                 registro = Reserva.tratarRegistro(object, reserva, status);
-                log("Reservas registradas atualizadas: " + registro);
+                // log("Reservas registradas atualizadas: " + registro);
                 defineObsProperty("reservation", registro);
                 return;
             }
         }
         registro = Reserva.tratarRegistro(reserva, status);
-        log("Reservas registradas atualizadas: " + registro);
+        // log("Reservas registradas atualizadas: " + registro);
         defineObsProperty("reservation", registro);
     }
 

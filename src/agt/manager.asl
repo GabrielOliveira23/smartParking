@@ -88,9 +88,9 @@
 		.print("Reserva nao disponivel");
         .send(DriverAgent, achieve, vagaDisponivel(false));
     };
-    -consultandoReserva(DriverAgent, TipoVaga, Data, Tempo);
     .abolish(reservaDisponivel(_));
     .abolish(vagaDisponivel(_));
+    -consultandoReserva(DriverAgent, TipoVaga, Data, Tempo);
     !processarProximaConsulta.
 
 +!consultarReserva(TipoVaga, Data, Tempo)[source(DriverAgent)] : consultandoReserva(_, _, _, _) <- 
