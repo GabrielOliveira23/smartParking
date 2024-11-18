@@ -36,17 +36,19 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     .wait(8000);
     !recomecar.
 
-+reservaNFT(ReservaId, TransferId)[source(manager)] : listaNFTs(Lista) <- 
++reservaNFT(ReservaId, TransferId) : listaNFTs(Lista) <- 
     .print("Reserva recebida");
+    .print("Reserva Id: ", ReservaId);
     !stampProcess(TransferId);
     -+listaNFTs([ReservaId|Lista]);
-    !escolher.
+    !recomecar.
 
-+reservaNFT(ReservaId, TransferId)[source(manager)] : not listaNFTs(Lista) <- 
++reservaNFT(ReservaId, TransferId) : not listaNFTs(Lista) <- 
     .print("Reserva recebida");
+    .print("Reserva Id: ", ReservaId);
     !stampProcess(TransferId);
     +listaNFTs([ReservaId]);
-    !escolher.
+    !recomecar.
 
 +reservationAvailable(Type,Date,Min)[source(driver)] <-
     .print("Motorista colocou a reserva disponivel").
@@ -84,7 +86,7 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     !definirTipoVaga;
     ?tipoVaga(Tipo);
     .random(R);
-    if (R < .5){
+    if (R < -.5){
         .print("Escolha ----> COMPRA");
         +decisao("COMPRA");
         +dataUso("now");
@@ -94,7 +96,6 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
         +decisao("RESERVA");
         !decidirReserva;
     } else {
-        // verificar isso
         // comprar de outro motorista
         .print("Escolha ----> COMPRARESERVA");
         +decisao("COMPRARESERVA");
@@ -114,13 +115,13 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 +!decidirReserva <-
     ?listaNFTs(Lista);
     .random(R);
-    if (R < .33) {
+    if (R < -.33) {
         .print("usar");
         +decisaoReserva("USAR");
         !escolherReserva(Lista);
         ?reservaEscolhida(ReservaId);
         !usarReserva;
-    } elif (R < .66) {
+    } elif (R < .5) {
         .print("reservar");
         +decisaoReserva("RESERVAR");
         !verificarReservasDeMotoristas;
@@ -435,19 +436,18 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     .print("Reserva a venda: ", ReservaId);
     +reservasDeMotoristas([[Motorista, ReservaId, DriverWallet]]).
 
-+!interesseCompraReserva(ReservaId)[source(Motorista)] : minhasReservasAVenda(ListaReservas) <-
-    .print("?????????????????????????????????????????????????????????????????????????????????????");
++!interesseCompraReserva(ReservaId)[source(Motorista)] : minhasReservasAVenda(ListaReservas) & not(.empty(ListaReservas)) 
+                & myWallet(PrK, PuK) <-
     if (.member(ReservaId, ListaReservas)) {
         .print("------------------> Motorista interessado em comprar reserva: ", ReservaId);
-        .delete(ListaReservas, ReservaId, NovaLista);
+        .delete(ReservaId, ListaReservas, NovaLista);
         .print("Lista original: ", ListaReservas);
         .print("Item removido: ", ReservaId);
         .print("Nova lista: ", NovaLista);
         -+minhasReservasAVenda(NovaLista);
-        .send(Motorista, tell, prosseguirCompra(ok));
+        .send(Motorista, achieve, prosseguirCompra(ReservaId, PuK));
     } else {
         .print("------------------> ReservaId não está em ListaReservas: ", ReservaId);
-        .abolish(minhasReservasAVenda(_));
     }.
 
 -!interesseCompraReserva(ReservaId) <-
@@ -482,6 +482,24 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 
 -!atualizarReservasAVenda(NovaReserva).
 
++!reservaPaga(IdTransacao, IdReserva, MotoristaW)[source(Motorista)] <-
+    .print("Reserva paga: ", IdReserva);
+    !stampProcess(IdTransacao);
+    !enviarReserva(IdReserva, MotoristaW, Motorista).
+
+-!reservaPaga(Id) <-
+    .print("XXXXXXXXXXXXXXXXX Erro ao validar reserva XXXXXXXXXXXXXXXXX").
+
++!enviarReserva(Reserva, Carteira, Motorista) : chainServer(Server) & myWallet(PrK, PuK) <-
+    .print("Enviando reserva: ", Reserva);
+    .velluscinum.transferNFT(Server, PrK, PuK, Reserva, Carteira,
+            "description:Sending Reservation", envioReserva);
+    .wait(envioReserva(TransactionId));
+    .send(Motorista, tell, reservaNFT(TransactionId, Reserva));
+    ?listaNFTs(Lista);
+    .delete(ReservaId, Lista, NovaLista);
+    -+listaNFTs(NovaLista).
+
 // -- COMPRAR RESERVA MOTORISTA --
 +!escolherReservaMotorista(Lista) <-
     if (.empty(Lista)) {
@@ -491,27 +509,40 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     .length(Lista, Tam);
     .random(X);
     Indice = math.floor(Tam * X);
-    .print("Indice: ", Indice);
-    .print("Lista: ", Lista);
     .nth(Indice, Lista, Tupla);
-    .print("Tupla: ", Tupla);
     Tupla = [Motorista, ReservaId, DriverWallet];
     .print("Reserva escolhida: ", ReservaId, " Motorista: ", Motorista, " Carteira: ", DriverWallet);
-    !querComprarReserva(ReservaId, Motorista, DriverWallet).
+    .send(Motorista, achieve, interesseCompraReserva(ReservaId)).
 
-+!querComprarReserva(ReservaId, Motorista, DriverWallet) : chainServer(Server) & myWallet(PrK, PuK) <-
-    .send(Motorista, achieve, interesseCompraReserva(ReservaId));
-    .wait(prosseguirCompra);
-    .print(prosseguirCompra);
-    .print("-----------> RETORNOU DO MOTORISTA");
-    .velluscinum.tokenInfo(Server, ReservaId, metadata, content);
-    .wait(content(Info));
-    .print("Info: ", Info).
++!prosseguirCompra(ReservaId, DriverWallet)[source(Motorista)] : chainServer(Server) & myWallet(PrK, PuK) <-
+    .print("Proseguindo com a compra");
+    .velluscinum.tokenInfo(Server, ReservaId, data, nftInfo);
+    .wait(nftInfo(Info));
+    !pegarDadosReserva(Info, Duracao, TipoVaga);
+    .print("Duracao: ", Duracao, " Tipo: ", TipoVaga);
+    !consultarPreco(TipoVaga);
+    ?precoTabela(Preco);
+    Valor = Preco * Duracao;
+    .print("Preco calculado: ", Valor);
+    .velluscinum.transferToken(Server,PrK,PuK,Coin,DriverWallet,Valor,pagamento);
+    .wait(pagamento(Id));
+    .send(Motorista, achieve, reservaPaga(Id)).
+
     // .print("Comprando reserva: ", ReservaId);
     // .velluscinum.transferNFT(Server, PrK, PuK, ReservaId, DriverWallet,
     //         "description:Buying Reservation", compraReserva);
     // .wait(compraReserva(TransactionId));
     // .send(manager, tell, querComprarReserva(ReservaId, TransactionId)).
+
+-!prosseguirCompra(ReservaId, DriverWallet) <-
+    .print("Erro ao prosseguir com a compra").
+
++!pegarDadosReserva(Info, Duracao, TipoVaga) <-
+    .print("Info: ", Info);
+    .nth(1, Info, CampoDuracao);
+    .nth(1, CampoDuracao, Duracao);
+    .nth(3, Info, CampoTipoVaga);
+    .nth(1, CampoTipoVaga, TipoVaga).
 
 // ----------------- ESTACIONAR E DEIXAR ESTACIONAMENTO -----------------
 
