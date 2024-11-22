@@ -13,17 +13,21 @@
 */
 
 mas smartParking {
-  agent manager {
-    focus: network.parkPricing, network.parkControl
+  agent manager: manager.asl {
+    focus: network.parkControl, network.utils
   }
 
-  agent creator
-  agent bank
+  agent creator {
+    focus: network.utils
+  }
+
+  agent bank {
+    focus: network.utils
+  }
 
   workspace network {
-    artifact driverControl: DriverControl
     artifact parkControl: ParkControl
-    artifact parkPricing: ParkPricing
+    artifact utils: Utils
   }
 
   uses package: velluscinum "com.github.chon-group:Velluscinum:+"

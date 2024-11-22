@@ -1,4 +1,5 @@
-// Agent bank in project chefBankGlutton
+{ include("$jacamo/templates/common-cartago.asl") }
+{ include("$jacamo/templates/common-moise.asl") }
 /* Initial beliefs and rules */
 chainServer("http://testchain.chon.group:9984/").
 // chainServer("http://localhost:9984/").
@@ -53,7 +54,9 @@ chainServer("http://testchain.chon.group:9984/").
 		.velluscinum.transferToken(Server,PrK,PuK,Coin,ClientWallet,Value,transactionTransfer);
 		.print("Transação processada com sucesso. Obrigado por escolher o SmartBank!");
 		.send(Client,tell,bankAccount(ok));
+		incrementarContadorMensagens; // counter
 	} else {
 		.print("Não há saldo suficiente para esta moeda. Transação cancelada. Obrigado por escolher o SmartBank!");
 		.send(Client,tell,bankAccount(fail));
+		incrementarContadorMensagens; // counter
 	}.

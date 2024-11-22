@@ -53,19 +53,21 @@ public class ParkControl extends Artifact {
     }
 
     @OPERATION
-    void verificarReserva(String tipo, String dataString, int duracao, Object[] metaDataList) {
+    void verificarReserva(String idVaga, String tipo, String dataString, int duracao, Object[] metaDataList) {
         Long date = Long.parseLong(dataString);
         Vaga vaga = preencherVaga(metaDataList);
-
+        
         if (!vaga.getStatus().equals("disponivel") || !vaga.getTipoVaga().equals(tipo)) {
             defineObsProperty("reservaDisponivel", false);
             return;
         }
+
         if (!verificarData(date, Funcoes.getDateWithMinutesAfter(date, duracao),
-                vaga.getReservas())) {
+        vaga.getReservas())) {
             defineObsProperty("reservaDisponivel", false);
             return;
         }
+
         log("Vaga disponível: " + vaga.getTipoVaga());
         defineObsProperty("reservaDisponivel", true);
         defineObsProperty("tipoVaga", vaga.getTipoVaga());
@@ -122,13 +124,11 @@ public class ParkControl extends Artifact {
             KeyValueObject object = extrairDados((Object[]) dados);
             if (object.getKey().equals("reservas")) {
                 registro = Reserva.tratarRegistro(object, reserva, status);
-                // log("Reservas registradas atualizadas: " + registro);
                 defineObsProperty("reservation", registro);
                 return;
             }
         }
         registro = Reserva.tratarRegistro(reserva, status);
-        // log("Reservas registradas atualizadas: " + registro);
         defineObsProperty("reservation", registro);
     }
 

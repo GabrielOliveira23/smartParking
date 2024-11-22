@@ -3,7 +3,7 @@
 
 /* Initial beliefs and rules */
 	                     					 
-agents_configs( [["driver", 2, []]]).
+agents_configs( [["driver", 5, []]]).
 				
 
 num_total_agentes(0).
@@ -21,8 +21,6 @@ iter(0).
 /* Plans */
 
 +!criarAgentes : agents_configs(Configs) <-
-	makeArtifact("parkPricing", "ParkPricing", [], PricingId);
-	makeArtifact("driverControl", "DriverControl", [], ControlId);
 	for( .member(Agent, Configs)){
 		.nth(1, Agent, Num_Agents);
 		?num_total_agentes(Num);

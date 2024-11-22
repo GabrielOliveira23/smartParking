@@ -1,7 +1,6 @@
 import cartago.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 public class ParkPricing extends Artifact { 
     private static Map<TipoVagaEnum, Double> precos;
@@ -36,6 +35,4 @@ public class ParkPricing extends Artifact {
             defineObsProperty("precoTabela", precoTabela);
         }
     }
-    
-    
 }
