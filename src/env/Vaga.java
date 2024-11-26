@@ -52,9 +52,6 @@ public class Vaga {
 
     public void setReservas(String reservasMeta) {
         this.reservas = transformarReservas(reservasMeta);
-        // for (Reserva reserva : reservasNova) {
-        // reserva.printReservaInfo();
-        // }
     }
 
     public List<Reserva> getReservas() {

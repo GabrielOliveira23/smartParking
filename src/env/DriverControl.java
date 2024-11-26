@@ -83,7 +83,6 @@ public class DriverControl extends Artifact {
                 break;
             }
             default: {
-                log("Escolha inválida");
                 break;
             }
         }
@@ -112,7 +111,6 @@ public class DriverControl extends Artifact {
                  * primeiro caso: usar a reserva para entrar
                  * no estacionamento
                  */
-                log("Entrar no estacionamento");
                 defineObsProperty("decisaoReserva", "USAR");
                 // log("Reserva escolhida: " + nft);
                 defineObsProperty("reservaEscolhida", nft);
@@ -122,7 +120,6 @@ public class DriverControl extends Artifact {
                 /*
                  * segundo caso: comprar uma reserva de vaga
                  */
-                log("Comprar uma reserva");
                 defineObsProperty("decisaoReserva", "RESERVAR");
                 break;
             }
@@ -131,7 +128,6 @@ public class DriverControl extends Artifact {
                  * terceiro caso: transferir a reserva para
                  * outro motorista
                  */
-                log("Processo de venda de reserva");
                 defineObsProperty("decisaoReserva", "VENDER");
                 break;
             }

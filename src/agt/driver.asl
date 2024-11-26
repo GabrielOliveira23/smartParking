@@ -17,35 +17,37 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 
 /* Plans */
 
-+decisao(X) <- .print("Escolha: ", X).
++decisao(X) <- .print("Escolha ----> ", X).
 
-+!vagaDisponivel(Status)[source(manager)] : Status == true <-
++!vagaDisponivel(Status, IdVaga) : Status == true <-
     .wait(3000);
-    ?idVaga(Id);
+    +idVaga(IdVaga);
     ?decisao(EscolhaDriver);
     ?dataUso(Data);
     if (EscolhaDriver == "COMPRA") {
-        !estacionar(Id);
+        !estacionar(IdVaga);
     } elif (EscolhaDriver == "RESERVA") {
-        !reservar(Id, Data);
+        !reservar(IdVaga, Data);
     }.
 
-+!vagaDisponivel(Status)[source(manager)] : Status == false <-
+-!vagaDisponivel(Status, IdVaga) : Status == true <-
+    .wait(3000);
+    !vagaDisponivel(Status, IdVaga).
+
++!vagaDisponivel(Status, IdVaga) : Status == false <-
     .print("Vaga indisponivel, aguardando...");
     .print("--------------------------------------------------------------");
     .wait(8000);
     !recomecar.
 
 +reservaNFT(ReservaId, TransferId) : listaNFTs(Lista) <- 
-    .print("Reserva recebida");
-    .print("Reserva Id: ", ReservaId);
+    .print("Reserva recebida -> ", ReservaId);
     !stampProcess(TransferId);
     -+listaNFTs([ReservaId|Lista]);
     !recomecar.
 
 +reservaNFT(ReservaId, TransferId) : not listaNFTs(Lista) <- 
-    .print("Reserva recebida");
-    .print("Reserva Id: ", ReservaId);
+    .print("Reserva recebida -> ", ReservaId);
     !stampProcess(TransferId);
     +listaNFTs([ReservaId]);
     !recomecar.
@@ -54,23 +56,20 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     .print("Erro ao receber reserva");
     !recomecar.
 
-+reservationAvailable(Type,Date,Min)[source(driver)] <-
-    .print("Motorista colocou a reserva disponivel").
-
 +!comecar <-
     joinWorkspace("network");
 	lookupArtifact("utils", UtilsId);
     focus(UtilsId);
     .wait(estacionamentoAberto);
     .send(manager, askOne, precoTabelaVagas(Tabela), TabelaVagas);
-    incrementarContadorMensagens; // counter
+    incrementarContadorMensagens;
     .wait(2000);
     +TabelaVagas;
     !criarCarteira;
     !obterConteudoCarteira;
     .wait(coinBalance(Balance));
     .send(manager, askOne, managerWallet(Manager), Reply);
-    incrementarContadorMensagens; // counter
+    incrementarContadorMensagens;
     .wait(1000);
     +Reply;
     !escolher.
@@ -97,22 +96,14 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     ?tipoVaga(Tipo);
     .random(R);
     if (R < .5) {
-        .print("Escolha ----> COMPRA");
         +decisao("COMPRA");
         +dataUso("now");
         !comecarNegociacao;
-    // } elif (R <= 1){
     } else {
-        .print("Escolha ----> RESERVA");
         +decisao("RESERVA");
-        !decidirReserva;
+        .random(R2);
+        !decidirReserva(R2);
     }.
-    // } else {
-    //     // comprar de outro motorista
-    //     .print("Escolha ----> COMPRARESERVA");
-    //     +decisao("COMPRARESERVA");
-    //     // definir data
-    // }.
 
 -!escolher : not listaNFTs(Lista) <-
     +listaNFTs([]).
@@ -124,43 +115,40 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     .nth(Indice, Tipos, Item);
     +tipoVaga(Item).
 
-+!decidirReserva <-
-    ?listaNFTs(Lista);
++!decidirReserva(R2) : listaNFTs(Lista) & R2 < .5 <-
     .random(R);
-    // if (R < -.33) {
-    if (R < .33) {
+    !escolherReserva(Lista);
+    ?reservaEscolhida(ReservaId);
+    if (R < .5) {
         .print("usar");
         +decisaoReserva("USAR");
-        !escolherReserva(Lista);
-        ?reservaEscolhida(ReservaId);
         !usarReserva;
-    } elif (R < .66) {
-    // } elif (R < .5) {
-        .print("reservar");
-        +decisaoReserva("RESERVAR");
-        !verificarReservasDeMotoristas;
     } else {
         .print("vender");
         +decisaoReserva("VENDER");
-        !escolherReserva(Lista);
-        ?reservaEscolhida(ReservaId);
         !porReservaAVenda;
     }.
 
--!decidirReserva : not listaNFTs(Lista) <-
-    .print("reservar sem lista");
-    +decisaoReserva("RESERVAR");
-    !decidirDataETempo;
-    !comecarNegociacao.
++!decidirReserva(R2) : not listaNFTs(Lista) | R2 < 1 <-
+    // .print("reservar sem lista");
+    .random(R);
+    if (R < .5) {
+        +decisaoReserva("RESERVAR");
+        !decidirDataETempo;
+        !comecarNegociacao;
+    } else {
+        +decisaoReserva("RESERVARMOTORISTA");
+        !verificarReservasDeMotoristas;
+    }.
 
--!decidirReserva : not reservaEscolhida(ReservaId) <-
+-!decidirReserva(R2) : not reservaEscolhida(ReservaId) <-
+    .print("Erro ao decidir reserva");
     !recomecar.
 
 -!decidirReserva <- 
     .print("Plano de reserva falhou").
 
 +!verificarReservasDeMotoristas : reservasDeMotoristas(Lista) <-
-    .print("Verificando reservas de motoristas");
     .length(Lista, Tam);
     if (Tam > 0) {
         .print("Reservas disponiveis a venda: ", Lista);
@@ -181,8 +169,7 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     
     .random(Y);
     Min = math.floor(Y*100+20);
-    +tempoUso(Min);
-    .print("Data: ", Data, " Minutos: ", Min).
+    +tempoUso(Min).
 
 +!comecarNegociacao[source(self)] : tipoVaga(Tipo) <-
     !consultarPreco(Tipo);
@@ -194,8 +181,7 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     
     !consultar.
 
--!comecarNegociacao <-
-    .print("Erro ao comecar negociacao").
+-!comecarNegociacao <- .print("Erro ao comecar negociacao").
 
 +!consultarPreco(TipoVaga) : precoTabelaVagas(Tabela) <-
     .member([TipoVaga, Preco], Tabela);
@@ -205,24 +191,25 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 
 +driverWallet(PuK) <- 
     .send(manager, tell, driverWallet(PuK));
-    incrementarContadorMensagens. // counter
+    incrementarContadorMensagens.
 
 +!criarCarteira : not myWallet(PrK,PuK) <-
     .print("Obtendo carteira digital...");
     .velluscinum.loadWallet(myWallet);
+	incrementarContadorTransacoes;
 	.wait(myWallet(PrK,PuK));
     +driverWallet(PuK);
     
     .send(bank, askOne, chainServer(Server), Chain);
-    incrementarContadorMensagens; // counter
+    incrementarContadorMensagens;
     .wait(2000);
     +Chain;
     .send(bank, askOne, bankWallet(BankW), Wallet);
-    incrementarContadorMensagens; // counter
+    incrementarContadorMensagens;
     .wait(2000);
     +Wallet;
     .send(bank, askOne, cryptocurrency(Coin), ReplyCoin);
-    incrementarContadorMensagens; // counter
+    incrementarContadorMensagens;
     .wait(2000);
     +ReplyCoin.
 
@@ -232,6 +219,7 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     .abolish(coinBalance(_));
     .print("Obtendo conteudo da carteira...");
     .velluscinum.walletContent(Server, PrK, PuK, content);
+	incrementarContadorTransacoes;
     .wait(content(Content));
     !findToken(Coin, set(Content));
     !findToken(nft, set(Content)).
@@ -241,23 +229,21 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     !findToken(Term,set(Tail)).
 
 +!compare(Term,[Type, AssetId, Qtd],set(V)) : (Term == AssetId) <- 
-    .print("Moeda: ", AssetId);
 	+coinBalance(Qtd);
     .print("Saldo atual: ", Qtd).
 
 +!compare(Term,[Type,AssetId,Qtd],set(V)) : (Term == Type) & listaNFTs(Lista) <-    
-    .print("Type: ", Type, " ID: ", AssetId);
+    // .print("Type: ", Type, " ID: ", AssetId);
     -+listaNFTs([AssetId|Lista]).
 
 +!compare(Term,[Type,AssetId,Qtd],set(V)) : (Term == Type) & not listaNFTs(Lista) <-
-    .print("Type: ", Type, " ID: ", AssetId);
+    // .print("Type: ", Type, " ID: ", AssetId);
     .concat(AssetId, Lista);
     +listaNFTs([Lista]).
 
 -!compare(Term,[Type,AssetId,Qtd],set(V)).
 
 -!findToken(Type,set([   ])) : not coinBalance(Amount) <- 
-	.print("Moeda Nao encontrada");
     !pedirEmprestimo.
 
 -!findToken(Type,set([   ])).
@@ -275,22 +261,19 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 	.print("Pedindo emprestimo...");
     ?emprestimoCount(Num);
     .concat("nome:motorista;emprestimo:", Num, Dados);
-    .print("Server: ", Server);
-    .print("PrK: ", PrK);
-    .print("PuK: ", PuK);
-    .print("Dados: ", Dados);
 
 	.velluscinum.deployNFT(Server, PrK, PuK, Dados,
                 "description:Creating Bank Account", account);
+	incrementarContadorTransacoes;
 	.wait(account(AssetId));
 
 	.velluscinum.transferNFT(Server, PrK, PuK, AssetId, BankW,
 				"description:requesting lend;value_chainCoin:100",requestID);
+	incrementarContadorTransacoes;
 	.wait(requestID(PP));
 	
-	.print("Lend Contract nr:",PP);
 	.send(bank, achieve, lending(PP, PuK, 100));
-    incrementarContadorMensagens; // counter
+    incrementarContadorMensagens;
     .wait(bankAccount(ok));
     .abolish(pedindoEmprestimo);
     !obterConteudoCarteira.
@@ -298,7 +281,7 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 +!pedirEmprestimo(Valor)[source(self)] : cryptocurrency(Coin) & bankWallet(BankW) 
             & chainServer(Server) & myWallet(PrK,PuK)
             & not pedindoEmprestimo <-
-    .print("dinheiro acabou, pedindo emprestimo");
+    // .print("dinheiro acabou, pedindo emprestimo");
     +pedindoEmprestimo;
     .abolish(bankAccount(_));
 
@@ -308,42 +291,40 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
         +emprestimoCount(1);
     }
 
-	.print("Pedindo emprestimo, valor: ", Valor);
+	// .print("Pedindo emprestimo, valor: ", Valor);
     ?emprestimoCount(Num);
     .concat("nome:motorista;emprestimo:", Num, Data);
 	.velluscinum.deployNFT(Server, PrK, PuK, Data,
                 "description:Creating Bank Account", account);
+	incrementarContadorTransacoes;
 	.wait(account(AssetId));
 
     .concat("description:requesting lend;value_chainCoin:", Valor, Descricao);
 	.velluscinum.transferNFT(Server, PrK, PuK, AssetId, BankW, Descricao, requestID);
+	incrementarContadorTransacoes;
 	.wait(requestID(PP));
 	
-	.print("Lend Contract nr:", PP);
+	// .print("Lend Contract nr:", PP);
 	.send(bank, achieve, lending(PP, PuK, Valor));
-    incrementarContadorMensagens; // counter
+    incrementarContadorMensagens;
     .wait(bankAccount(ok));
     .abolish(pedindoEmprestimo).
 
-+!pedirEmprestimo : pedindoEmprestimo <-
-    .print("Ja esta pedindo emprestimo").
++!pedirEmprestimo : pedindoEmprestimo <- .print("Ja esta pedindo emprestimo").
 
 -!pedirEmprestimo <-
-    .print("Erro ao pedir emprestimo");
+    // .print("Erro ao pedir emprestimo");
     .wait(5000);
     !pedirEmprestimo.
 
 // ----- VALIDACAO -----
 +!stampProcess(TransactionId)[source(self)] : chainServer(Server) & myWallet(PrK,PuK) <-
     .print("Validando transferencia...");
-    .print("Server: ", Server);
-    .print("PrK: ", PrK);
-    .print("PuK: ", PuK);
-    .print("TransactionId: ", TransactionId);
-    .velluscinum.stampTransaction(Server, PrK, PuK, TransactionId).
+    .velluscinum.stampTransaction(Server, PrK, PuK, TransactionId);
+	incrementarContadorTransacoes.
 
 -!stampProcess(TransactionId) <- 
-    .print("Erro ao validar transferencia, tentando novamente");
+    // .print("Erro ao validar transferencia, tentando novamente");
     .wait(3000);
     !stampProcess(TransactionId).
 
@@ -351,7 +332,7 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 // ----- USO -----
 
 +vagaOcupada(Id)[source(manager)] : coinBalance(Balance) & precoTabela(Price) <-
-    .print("Vaga ocupada");
+    // .print("Vaga ocupada");
     tempoEstacionado(Tempo, Balance, Price);
     // ?tempoUso(Min);
     .wait(Tempo*10);
@@ -361,20 +342,23 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 
 +!consultar[source(self)] : tipoVaga(Tipo) & decisao(EscolhaDriver) 
             & EscolhaDriver == "COMPRA" <-
-    // .print("Consultando vaga...");
+    .print("Consultando vaga...");
     .send(manager, achieve, consultarVaga(Tipo, Data));
-    incrementarContadorMensagens. // counter
+    incrementarContadorMensagens.
 
-+!comprar(Tempo) <- 
++!comprar(Tempo) : tipoVaga(Tipo) <- 
     // .print("Pagamento da vaga");
-    ?tipoVaga(Tipo);
     .send(manager, achieve, pagamentoUsoVaga(Tipo, Tempo));
-    incrementarContadorMensagens. // counter
+    incrementarContadorMensagens.
+
+-!comprar(Tempo) <-
+    .print("Erro ao comprar vaga").
+    // !recomecar.
 
 +!pagarUso(Valor) : not managerWallet(Manager) <-
     .wait(5000);
     .send(manager,askOne,managerWallet(Manager),Reply);
-    incrementarContadorMensagens; // counter
+    incrementarContadorMensagens;
     +Reply;
     !pagarUso(Valor).
 
@@ -384,10 +368,10 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     .print("Pagamento em andamento...");
     ?idVaga(Id);
     .velluscinum.transferToken(Server,PrK,PuK,Coin,Manager,Valor,payment);
+	incrementarContadorTransacoes;
     .wait(payment(TransactionId));
-    .print("Pagamento realizado");
     .send(manager, achieve, validarPagamento(TransactionId, Id));
-    incrementarContadorMensagens; // counter
+    incrementarContadorMensagens;
     .abolish(payment(_)).
 
 +!pagarUso(Valor) : cryptocurrency(Coin) & chainServer(Server)
@@ -400,31 +384,31 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 +!estacionar(Id)[source(self)] <-
     .print("--------------------------------------------------------------");
     .print("Estacionando veiculo na vaga ", Id);
-    .send(manager, tell, querEstacionar(Id));
-    incrementarContadorMensagens. // counter
+    .send(manager, achieve, motoristaQuerEstacionar(Id));
+    incrementarContadorMensagens.
 
 // ----- RESERVAR -----
 
 +!consultar[source(self)] : tipoVaga(Tipo) & dataUso(Data) & tempoUso(Min) 
             & decisaoReserva(EscolhaReserva) & EscolhaReserva == "RESERVAR" <-
-    .print("Tempo de reserva: ", Min);
-    .print("Consultando vaga...");
+    .print("Consultando reserva...");
     .send(manager, achieve, consultarReserva(Tipo, Data, Min));
-    incrementarContadorMensagens. // counter
+    incrementarContadorMensagens.
 
 +!reservar(Id, Data) : tempoUso(Min) & chainServer(Server) & myWallet(PrK,PuK) 
             & cryptocurrency(Coin) & managerWallet(Manager) <- 
     .print("Pagando reserva...");
     ?precoTabela(Preco);
     .velluscinum.transferToken(Server, PrK, PuK, Coin, Manager, Preco, payment);
+	incrementarContadorTransacoes;
     .wait(payment(TransactionId));
-    .send(manager, tell, pagouReserva(TransactionId, Id, Data, Min));
-    incrementarContadorMensagens. // counter
+    .send(manager, achieve, motoristaPagouReserva(TransactionId, Id, Data, Min));
+    incrementarContadorMensagens.
 
 +!reservar(Id, Data) : not managerWallet(Manager) <-
     .wait(5000);
     .send(manager,askOne,managerWallet(Manager),Reply);
-    incrementarContadorMensagens; // counter
+    incrementarContadorMensagens;
     +Reply;
     !reservar(Id, Data).
 
@@ -445,18 +429,29 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     .random(X);
     Indice = math.floor(Tam*X);
     .nth(Indice, Lista, ReservaId);
+    !verificarReservasAVenda(ReservaId).
+
++!verificarReservasAVenda(ReservaId) : minhasReservasAVenda(Lista) <-
+    if(.member(ReservaId, Lista)) {
+        .print("Essa reserva esta a venda");
+    } else {
+        .print("Reserva escolhida: ", ReservaId);
+        +reservaEscolhida(ReservaId);
+    }.
+
++!verificarReservasAVenda(ReservaId) : not minhasReservasAVenda(Lista) <-
     .print("Reserva escolhida: ", ReservaId);
     +reservaEscolhida(ReservaId).
-
 
 +!usarReserva : chainServer(Server) & myWallet(PrK, PuK)
             & managerWallet(ManagerW) & reservaEscolhida(ReservaId) <-
     .print("Escolha de reserva: ", ReservaId);
     .velluscinum.transferNFT(Server, PrK, PuK, ReservaId, ManagerW,
             "description:Using Reservation", usoReserva);
+	incrementarContadorTransacoes;
     .wait(usoReserva(TransactionId));
-    .send(manager, tell, querUsarReserva(ReservaId, TransactionId));
-    incrementarContadorMensagens. // counter
+    .send(manager, achieve, motoristaQuerUsarReserva(ReservaId, TransactionId));
+    incrementarContadorMensagens.
 
 // -- VENDER RESERVA --
 +reservaAVenda(ReservaId, DriverWallet)[source(Motorista)] : reservasDeMotoristas(Lista) <- 
@@ -473,23 +468,28 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
                 & not(.empty(ListaReservas) | negociacaoEmAndamento) <-
     ?myWallet(PrK, PuK);
     if (.member(ReservaId, ListaReservas)) {
-        .print("------------------> Motorista interessado em comprar reserva: ", ReservaId);
+        .print("Motorista interessado em comprar reserva: ", ReservaId);
         +negociacaoEmAndamento;
-        // .delete(ReservaId, ListaReservas, NovaLista);
-        // .print("Lista original: ", ListaReservas);
-        // .print("Item removido: ", ReservaId);
-        // .print("Nova lista: ", NovaLista);
-        // -+minhasReservasAVenda(NovaLista);
-        .send(Motorista, achieve, prosseguirCompra(ReservaId, PuK));
-        incrementarContadorMensagens; // counter
+        
+        .velluscinum.tokenInfo(Server, ReservaId, data, nftInfo);
+	    incrementarContadorTransacoes;
+        .wait(nftInfo(Info));
+        !extrairDadosReserva(Info, Duracao, TipoVaga);
+        !consultarPreco(TipoVaga);
+        ?precoTabela(Preco);
+        stringToNumber(Duracao, DuracaoNum);
+        Valor = math.ceil(Preco * DuracaoNum / 60);
+        
+        .send(Motorista, achieve, prosseguirCompra(ReservaId, PuK, Valor));
+        incrementarContadorMensagens;
     } else {
-        .print("------------------> ReservaId não está em ListaReservas: ", ReservaId);
+        .print("Reserva não está em ListaReservas: ", ReservaId);
     }.
 
 -!interesseCompraReserva(ReservaId, Motorista) : negociacaoEmAndamento 
                 & minhasReservasAVenda(ListaReservas) & not(.empty(ListaReservas)) <-
     if (not(.member(ReservaId, ListaReservas))) {
-        .print("------------------> ReservaId não está em ListaReservas: ", ReservaId);
+        .print("Reserva não está em ListaReservas: ", ReservaId);
         .fail;
     };
     .wait(6000);
@@ -498,7 +498,7 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 -!interesseCompraReserva(ReservaId, Motorista) <-
     .print("Erro ao comprar reserva");
     .send(Motorista, tell, prosseguirCompra(fail));
-    incrementarContadorMensagens. // counter
+    incrementarContadorMensagens.
 
 +!porReservaAVenda: reservaEscolhida(ReservaId) & minhasReservasAVenda(ListaReservas) & myWallet(PrK, PuK) <-
     !atualizarReservasAVenda(ReservaId);
@@ -530,31 +530,31 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
 
 +!reservaPaga(TransacaoId, ReservaId, MotoristaW)[source(Motorista)] : myWallet(PrK, PuK) & chainServer(Server) <-
     .print("Reserva paga: ", ReservaId);
-    // !stampProcess(TransacaoId);
-    .print("Server: ", Server);
-    .print("PrK: ", PrK);
-    .print("PuK: ", PuK);
-    .print("TransacaoId: ", TransacaoId);
-    .print("000000000000000000000000000000000000000000000");
-    // .wait(100000); // timer
-    .velluscinum.stampTransaction(Server, PrK, PuK, TransacaoId);
+    // .velluscinum.stampTransaction(Server, PrK, PuK, TransacaoId);
     !enviarReserva(ReservaId, MotoristaW, Motorista).
 
 -!reservaPaga(Id)[source(Motorista)] <-
-    .print("XXXXXXXXXXXXXXXXX Erro ao validar reserva XXXXXXXXXXXXXXXXX");
     .send(Motorista, tell, reservaNFT(fail)).
 
 +!enviarReserva(ReservaId, Carteira, Motorista) : chainServer(Server) & myWallet(PrK, PuK) <-
     .print("Enviando reserva: ", ReservaId);
-    .velluscinum.transferNFT(Server, PrK, PuK, ReservaId, Carteira,
-            "description:Sending Reservation", envioReserva);
+    .concat("description:Sending Reservation;reservation:", ReservaId, Descricao);
+    .velluscinum.transferNFT(Server, PrK, PuK, ReservaId, Carteira, Descricao, envioReserva);
+	incrementarContadorTransacoes;
     .wait(envioReserva(IdTransacao));
     .send(Motorista, tell, reservaNFT(ReservaId, IdTransacao));
-    incrementarContadorMensagens; // counter
+    incrementarContadorMensagens;
     ?listaNFTs(Lista);
     .delete(ReservaId, Lista, NovaLista);
     -+listaNFTs(NovaLista);
     .abolish(negociacaoEmAndamento).
+
+-!enviarReserva(ReservaId, Carteira, Motorista) : chainServer(Server) & myWallet(PrK, PuK) 
+                & not listaNFTs(Lista) <-
+    .abolish(negociacaoEmAndamento).
+
+-!enviarReserva(ReservaId, Carteira, Motorista) <-
+    .print("Erro ao enviar reserva").
 
 // -- COMPRAR RESERVA MOTORISTA --
 +!escolherReservaMotorista(Lista) <-
@@ -567,34 +567,29 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     Indice = math.floor(Tam * X);
     .nth(Indice, Lista, Tupla);
     Tupla = [Motorista, ReservaId, DriverWallet];
-    .print("Reserva escolhida: ", ReservaId, " Motorista: ", Motorista, " Carteira: ", DriverWallet);
+    // .print("Reserva escolhida: ", ReservaId, " Motorista: ", Motorista, " Carteira: ", DriverWallet);
     .my_name(Me);
     .send(Motorista, achieve, interesseCompraReserva(ReservaId, Me));
-    incrementarContadorMensagens. // counter
+    incrementarContadorMensagens.
 
-+!prosseguirCompra(ReservaId, DriverWallet)[source(Motorista)] : chainServer(Server) 
++!prosseguirCompra(ReservaId, DriverWallet, Valor)[source(Motorista)] : chainServer(Server) 
                 & myWallet(PrK, PuK) & cryptocurrency(Coin) <-
-    .print("Proseguindo com a compra");
-    .velluscinum.tokenInfo(Server, ReservaId, data, nftInfo);
-    .wait(nftInfo(Info));
-    !extrairDadosReserva(Info, Duracao, TipoVaga);
-    !consultarPreco(TipoVaga);
-    ?precoTabela(Preco);
-    stringToNumber(Duracao, DuracaoNum);
-    Valor = math.ceil(Preco * DuracaoNum / 60);
-    .print("Preco calculado: ", Valor);
+    .print("Servidor: ", Server);
+    .print("Carteira: ", DriverWallet);
+    .print("Valor: ", Valor);
+    .print("Reserva: ", ReservaId);
     .velluscinum.transferToken(Server, PrK, PuK, Coin, DriverWallet, Valor, pagamento);
+	incrementarContadorTransacoes;
     .wait(pagamento(TransacaoId));
     .print("Pagamento realizado para: ", DriverWallet);
-    .print("TransacaoId: ", TransacaoId);
     .send(Motorista, achieve, reservaPaga(TransacaoId, ReservaId, PuK));
-    incrementarContadorMensagens. // counter
+    incrementarContadorMensagens.
 
--!prosseguirCompra(ReservaId, DriverWallet) <-
+-!prosseguirCompra(ReservaId, DriverWallet, Valor) <-
     .print("Erro ao prosseguir com a compra").
 
 +!extrairDadosReserva(Info, Duracao, TipoVaga) <-
-    .print("Info: ", Info);
+    // .print("Info: ", Info);
     .nth(1, Info, CampoDuracao);
     .nth(1, CampoDuracao, Duracao);
     .nth(3, Info, CampoTipoVaga);
@@ -617,9 +612,8 @@ tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
     .print("Estacionando veiculo na vaga ", VagaId);
     +estacionado(VagaId);
     .wait(3000);
-    // .abolish(tempoUso(_));
-    .send(manager, tell, querSair(VagaId));
-    incrementarContadorMensagens. // counter
+    .send(manager, achieve, motoristaQuerSair(VagaId));
+    incrementarContadorMensagens.
 
 +!sairEstacionamento : true <-
     .print("Saindo da vaga");

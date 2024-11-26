@@ -33,7 +33,7 @@ public class ParkControl extends Artifact {
 
         if (vaga.getStatus().equals("disponivel") && vaga.getTipoVaga().equals(type)) {
             if (verificarData(date, vaga)) {
-                log("Vaga disponível: " + vaga.getTipoVaga());
+                // log("Vaga disponível: " + vaga.getTipoVaga());
                 status.set(true);
                 return;
             }
@@ -68,7 +68,7 @@ public class ParkControl extends Artifact {
             return;
         }
 
-        log("Vaga disponível: " + vaga.getTipoVaga());
+        // log("Vaga disponível: " + vaga.getTipoVaga());
         defineObsProperty("reservaDisponivel", true);
         defineObsProperty("tipoVaga", vaga.getTipoVaga());
         defineObsProperty("dataUso", date);
@@ -137,8 +137,8 @@ public class ParkControl extends Artifact {
         Vaga vaga = preencherVaga(metadata);
         for (Reserva reserva : vaga.getReservas()) {
             if (reservationId.equals(reserva.getId())) {
-                log("Reserva encontrada reservationId: " + reservationId);
-                log("Reserva encontrada assetId: " + assetId);
+                // log("Reserva encontrada reservationId: " + reservationId);
+                // log("Reserva encontrada assetId: " + assetId);
                 defineObsProperty("reservaEncontrada", assetId);
                 return;
             }
@@ -148,9 +148,9 @@ public class ParkControl extends Artifact {
     @OPERATION
     void calcularValorAPagarUso(String tipoVaga, int minutos, OpFeedbackParam<Double> valorAPagar) {
         double preco = ParkPricing.getPreco(TipoVagaEnum.setTipoVaga(tipoVaga));
-        log("Preço da tabela: " + preco);
+        // log("Preço da tabela: " + preco);
         preco = Math.round(preco * ((double) minutos / 60));
-        log("Valor a pagar: " + preco);
+        // log("Valor a pagar: " + preco);
 
         valorAPagar.set(preco);
     }

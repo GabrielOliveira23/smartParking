@@ -7,6 +7,7 @@ import cartago.*;
 
 public class Utils extends Artifact {
     private int counter = 0;
+    private int counterVellus = 0;
     private ScheduledExecutorService scheduler;
 
     void init() {
@@ -26,6 +27,7 @@ public class Utils extends Artifact {
     @INTERNAL_OPERATION
     void printContador() {
         log("Mensagens trocadas pelos agentes: " + this.counter);
+        log("Transações realizadas pelo Velluscinum: " + this.counterVellus);
     }
 
     @OPERATION
@@ -41,6 +43,11 @@ public class Utils extends Artifact {
     @OPERATION
     void incrementarContadorMensagens() {
         this.counter++;
+    }
+
+    @OPERATION
+    void incrementarContadorTransacoes() {
+        this.counterVellus++;
     }
 
     @OPERATION

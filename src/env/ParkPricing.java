@@ -6,7 +6,7 @@ public class ParkPricing extends Artifact {
     private static Map<TipoVagaEnum, Double> precos;
     
     void init() {
-        precos = new HashMap<>();
+        precos = new HashMap<TipoVagaEnum, Double>();
         precos.put(TipoVagaEnum.CURTA, 10.0);
         precos.put(TipoVagaEnum.LONGA, 14.0);
         precos.put(TipoVagaEnum.CURTACOBERTA, 18.0);
@@ -14,7 +14,15 @@ public class ParkPricing extends Artifact {
     }
 
     public static Double getPreco(TipoVagaEnum tipoVaga) {
-        return precos.getOrDefault(tipoVaga, 0.0);
+        if (precos == null) {
+            precos = new HashMap<TipoVagaEnum, Double>();
+            precos.put(TipoVagaEnum.CURTA, 10.0);
+            precos.put(TipoVagaEnum.LONGA, 14.0);
+            precos.put(TipoVagaEnum.CURTACOBERTA, 18.0);
+            precos.put(TipoVagaEnum.LONGACOBERTA, 20.0);
+        }
+
+        return precos.get(tipoVaga);
     }
 
     @OPERATION
