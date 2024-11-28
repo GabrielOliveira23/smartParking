@@ -50,6 +50,15 @@ public class Vaga {
         return listOfStringArrays;
     }
 
+    public static String convertReservationsToString(List<Reserva> reservations) {
+        String result = "";
+        for (Reserva reserva : reservations) {
+            result += "[" + reserva.getId() + "," + reserva.getData() + "," + reserva.getTempoUso() + "],";
+        }
+
+        return result.substring(0, result.length() - 1);
+    }
+
     public void setReservas(String reservasMeta) {
         this.reservas = transformarReservas(reservasMeta);
     }

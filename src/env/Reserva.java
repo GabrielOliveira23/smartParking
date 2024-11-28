@@ -17,6 +17,9 @@ public class Reserva {
     }
 
     public static String tratarRegistro(Reserva novaReserva, String status) {
+        if (novaReserva == null) {
+            return "status:" + status;
+        }
         return "status:" + status + ";reservas:[[" + novaReserva.getId() + ","
                 + novaReserva.data + "," + novaReserva.tempoUso + "]]";
     }

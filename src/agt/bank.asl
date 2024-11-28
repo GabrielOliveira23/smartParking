@@ -3,21 +3,25 @@
 /* Initial beliefs and rules */
 chainServer("http://testchain.chon.group:9984/").
 // chainServer("http://localhost:9984/").
+mensagensEnviadas(0).
 
 /* Initial goals */
 !carregarCarteira.
 
 /* Plans */
++!incMensagensEnviadas : mensagensEnviadas(Num) <-
+    -+mensagensEnviadas(Num+1).
+
 +!carregarCarteira: chainServer(Server) <-
 	.broadcast(tell, chainServer(Server));
 	.print("Obtendo carteira digital");
 	.velluscinum.loadWallet(myWallet);
-	incrementarContadorTransacoes;
+	incContadorTransacoesVellus;
 	.wait(myWallet(PrK,PuK));
 	+bankWallet(PuK);
 
 	.velluscinum.walletContent(Server, PrK, PuK, content);
-	incrementarContadorTransacoes;
+	incContadorTransacoesVellus;
     .wait(content(Content));
 	!findToken(token, set(Content));
 	.wait(cryptocurrency(Coin)).
@@ -44,7 +48,7 @@ chainServer("http://testchain.chon.group:9984/").
 +!criarMoeda: chainServer(Server) & myWallet(PrK, PuK) <- 
 	.print("Criando moeda");
 	.velluscinum.deployToken(Server, PrK, PuK, "name:cryptocurrency", 100000, cryptocurrency);
-	incrementarContadorTransacoes;
+	incContadorTransacoesVellus;
 	+coinBalance(100000);
 	.wait(cryptocurrency(Coin)).
 
@@ -52,16 +56,16 @@ chainServer("http://testchain.chon.group:9984/").
 			cryptocurrency(Coin) & coinBalance(Amount) & myWallet(PrK,PuK) & chainServer(Server) <-
 	.print("Olá agente ",Client,", Bem vindo ao SmartBank! - Por favor espere enquanto validamos a transferência.");
 	.velluscinum.stampTransaction(Server,PrK,PuK,ResquestNumber,loan(Client));
-	incrementarContadorTransacoes;
+	incContadorTransacoesVellus;
 	if (Amount >= Value) {
 		.print("Transferência validada. Aguarde enquanto processamos a transação.");
 		.velluscinum.transferToken(Server,PrK,PuK,Coin,ClientWallet,Value,transactionTransfer);
-		incrementarContadorTransacoes;
+		incContadorTransacoesVellus;
 		.print("Transação processada com sucesso. Obrigado por escolher o SmartBank!");
 		.send(Client,tell,bankAccount(ok));
-		incrementarContadorMensagens;
+		!incMensagensEnviadas;
 	} else {
 		.print("Não há saldo suficiente para esta moeda. Transação cancelada. Obrigado por escolher o SmartBank!");
 		.send(Client,tell,bankAccount(fail));
-		incrementarContadorMensagens;
+		!incMensagensEnviadas;
 	}.
