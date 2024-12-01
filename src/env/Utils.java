@@ -9,7 +9,7 @@ public class Utils extends Artifact {
     private int counter = 0;
     private int counterSuccess = 0;
     private int counterVellus = 0;
-    private int counterDriversCicles = 0;
+    private int counterDriversMessage = 0;
     private ScheduledExecutorService scheduler;
 
     void init() {
@@ -23,14 +23,14 @@ public class Utils extends Artifact {
             public void run() {
                 execInternalOp("printContador");
             }
-        }, 0, 10, TimeUnit.SECONDS);
+        }, 0, 20, TimeUnit.SECONDS);
     }
 
     @INTERNAL_OPERATION
     void printContador() {
         log("Negociações com sucesso: " + this.counterSuccess + "/" + this.counter);
         log("Transações realizadas pelo Velluscinum: " + this.counterVellus);
-        log("Ciclos de motoristas: " + this.counterDriversCicles);
+        log ("Mensagens enviadas pelos motoristas: " + this.counterDriversMessage);
     }
 
     @OPERATION
@@ -59,8 +59,8 @@ public class Utils extends Artifact {
     }
 
     @OPERATION
-    void incCiclosMotoristas() {
-        this.counterDriversCicles++;
+    void incMensagensMotoristas() {
+        this.counterDriversMessage++;
     }
 
     @OPERATION

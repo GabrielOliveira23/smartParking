@@ -56,14 +56,14 @@ public class ParkControl extends Artifact {
     void verificarReserva(String idVaga, String tipo, String dataString, int duracao, Object[] metaDataList) {
         Long date = Long.parseLong(dataString);
         Vaga vaga = preencherVaga(metaDataList);
-        
+
         if (!vaga.getStatus().equals("disponivel") || !vaga.getTipoVaga().equals(tipo)) {
             defineObsProperty("reservaDisponivel", false);
             return;
         }
 
         if (!verificarData(date, Funcoes.getDateWithMinutesAfter(date, duracao),
-        vaga.getReservas())) {
+                vaga.getReservas())) {
             defineObsProperty("reservaDisponivel", false);
             return;
         }
@@ -143,12 +143,24 @@ public class ParkControl extends Artifact {
                     defineObsProperty("novoRegistro", "status:ocupado");
                     return;
                 }
-                String listaReservas = "status:ocupado;reservas:[" + Vaga.convertReservationsToString(vaga.getReservas()) + "]";
-                log("Novo metadata: " + listaReservas);
+                String listaReservas = "status:ocupado;reservas:["
+                        + Vaga.convertReservationsToString(vaga.getReservas()) + "]";
                 defineObsProperty("novoRegistro", listaReservas);
                 return;
             }
         }
+    }
+
+    @OPERATION
+    void preparandoLiberacao(Object[] metadata, OpFeedbackParam<String> novoRegistro) {
+        Vaga vaga = preencherVaga(metadata);
+        if (vaga.getReservas().size() == 0) {
+            novoRegistro.set("status:disponivel");
+            return;
+        }
+
+        novoRegistro.set("status:disponivel;reservas:["
+                + Vaga.convertReservationsToString(vaga.getReservas()) + "]");
     }
 
     @OPERATION

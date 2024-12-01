@@ -1,8 +1,9 @@
 { include("$jacamo/templates/common-cartago.asl") }
 { include("$jacamo/templates/common-moise.asl") }
+
 /* Initial beliefs and rules */
-chainServer("http://testchain.chon.group:9984/").
-// chainServer("http://localhost:9984/").
+//chainServer("http://testchain.chon.group:9984/"). // remoto
+chainServer("http://localhost:9984/"). // local
 mensagensEnviadas(0).
 
 /* Initial goals */

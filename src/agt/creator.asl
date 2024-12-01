@@ -2,8 +2,8 @@
 { include("$jacamoJar/templates/common-moise.asl") }
 
 /* Initial beliefs and rules */
-	                     					 
-agents_configs( [["driver", 2, []]]).
+    					 
+agents_configs( [["driver", 50, []]]).
 				
 
 num_total_agentes(0).

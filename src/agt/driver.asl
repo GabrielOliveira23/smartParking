@@ -11,7 +11,6 @@ datasReservas([
     "1729443600"
     ]).
 tiposDeVaga(["Curta", "Longa", "CurtaCoberta", "LongaCoberta"]).
-// tiposDeVaga(["Curta"]).
 mensagensEnviadas(0).
 
 /* Initial goals */
@@ -66,13 +65,13 @@ mensagensEnviadas(0).
     !recomecar.
 
 +!incMensagensEnviadas : mensagensEnviadas(Num) <-
+    incMensagensMotoristas;
     -+mensagensEnviadas(Num+1).
 
 +!comecar <-
     joinWorkspace("network");
 	lookupArtifact("utils", UtilsId);
     focus(UtilsId);
-    incCiclosMotoristas;
     .wait(estacionamentoAberto);
     .send(manager, askOne, precoTabelaVagas(Tabela), TabelaVagas);
     !incMensagensEnviadas;
@@ -93,7 +92,6 @@ mensagensEnviadas(0).
     !obterConteudoCarteira;
     .wait(coinBalance(Balance));
 
-    incCiclosMotoristas;
     !escolher.
 
 +!resetar <-
@@ -120,7 +118,6 @@ mensagensEnviadas(0).
     } else {
         +decisao("RESERVA");
         .random(R2);
-        .print(R2);
         !decidirReserva(R2);
     }.
 
@@ -338,14 +335,20 @@ mensagensEnviadas(0).
 
 // ----- VALIDACAO -----
 +!stampProcess(TransactionId)[source(self)] : chainServer(Server) & myWallet(PrK,PuK) <-
+    +tentativaStamp(1);
     .print("Validando transferencia...");
     .velluscinum.stampTransaction(Server, PrK, PuK, TransactionId);
-	incContadorTransacoesVellus.
+    incContadorTransacoesVellus;
+    .abolish(tentativaStamp(_)).
 
--!stampProcess(TransactionId) <- 
+-!stampProcess(TransactionId) : tentativaStamp(Count) & Count <= 5 <- 
     // .print("Erro ao validar transferencia, tentando novamente");
+    Count = Count + 1;
     .wait(3000);
+    -+tentativaStamp(Count);
     !stampProcess(TransactionId).
+
+-!stampProcess(TransactionId).
 
 // -------------------- CENARIOS --------------------
 // ----- USO -----

@@ -12,22 +12,6 @@ mensagensEnviadas(0).
 // ----------------------------- COMMONS ------------------------------
 +!incMensagensEnviadas : mensagensEnviadas(Num) <-
     -+mensagensEnviadas(Num+1).
-
-// +!consultarVaga(TipoVaga)[source(DriverAgent)]: listaVagas(Lista) <-
-// 	.print("Motorista: ", DriverAgent, " Consultando vaga: ", TipoVaga);
-// 	.send(DriverAgent, askOne, driverWallet(DriverW), Reply);
-// 	!incMensagensEnviadas;
-// 	.wait(3000);
-// 	+Reply;
-// 	!disponibilidadeCompra(TipoVaga, set(Lista));
-// 	?vagaDisponivel(Status, Id);
-// 	.send(DriverAgent, achieve, vagaDisponivel(Status, Id));
-// 	!incMensagensEnviadas;
-// 	.send(DriverAgent, tell, idVaga(Head));
-// 	!incMensagensEnviadas;
-// 	.abolish(vagaDisponivel(Status,Id)).
-
-
 	
 +!consultarVaga(TipoVaga)[source(DriverAgent)]: listaVagas(Lista) & not consultandoVaga(_,_) <- 
     .print("Motorista: ", DriverAgent, " Consultando vaga: ", TipoVaga);
@@ -145,8 +129,8 @@ mensagensEnviadas(0).
 		.send(DriverAgent, achieve, vagaDisponivel(false, 0));
 		!incMensagensEnviadas;
 	} else {
-		.print("fila: ", Pendentes);
-		.print("adicionado: ", [DriverAgent, TipoVaga, Data, Tempo]);
+		// .print("fila: ", Pendentes);
+		// .print("adicionado: ", [DriverAgent, TipoVaga, Data, Tempo]);
 		.abolish(consultasPendentes(_));
 		+consultasPendentes([[DriverAgent, TipoVaga, Data, Tempo] | Pendentes]);
 	}.
@@ -162,7 +146,7 @@ mensagensEnviadas(0).
 		.abolish(consultasPendentes(_));
 	} else {
 		-+consultasPendentes(Restantes);
-		.print("Ainda tem na fila: ", Restantes);
+		// .print("Ainda tem na fila: ", Restantes);
 	};
     ProximaConsulta = [DriverAgent, TipoVaga, Data, Tempo];
 	.print("Proxima consulta: ", ProximaConsulta);
@@ -317,7 +301,7 @@ mensagensEnviadas(0).
 	.wait(dadosVaga(Dados));
 	acharReserva(ReservaId, VagaId, Dados);
 	?novoRegistro(Registro);
-	.print("novo registro: ", Registro);
+	// .print("novo registro: ", Registro);
 	!consumirReserva(VagaId, Registro);
 	.abolish(novoRegistro(_));
 	.abolish(dadosVaga(_)).
@@ -360,8 +344,12 @@ mensagensEnviadas(0).
 	.print("Vaga ocupada").
 
 +!liberarVaga(Id) : chainServer(Server) & myWallet(PrK,PuK) <-
-	// verificar se a reserva ainda existe se a vaga for liberada
-	.velluscinum.transferNFT(Server, PrK, PuK, Id, PuK, "status:disponivel", requestID);
+	.velluscinum.tokenInfo(Server, Id, metadata, content);
+	incContadorTransacoesVellus;
+	.wait(content(Content));
+	preparandoLiberacao(Content, Registro);
+	.print("Preparando liberacao: ", Registro);
+	.velluscinum.transferNFT(Server, PrK, PuK, Id, PuK, Registro, requestID);
 	incContadorTransacoesVellus;
 	.wait(requestID(TransferId));
 	.abolish(requestID(TransferId)).
@@ -410,31 +398,31 @@ mensagensEnviadas(0).
 					["LongaCoberta", 20]
 					])).
 
-+!listarVagas: chainServer(Server) & myWallet(PrK,PuK) <- 
-	.velluscinum.deployNFT(Server, PrK, PuK, "name:Vaga1;tipo:Curta", "status:disponivel", account);
-	incContadorTransacoesVellus;
-	.wait(account(Vaga1Id));
+// +!listarVagas: chainServer(Server) & myWallet(PrK,PuK) <- 
+// 	.velluscinum.deployNFT(Server, PrK, PuK, "name:Vaga1;tipo:Curta", "status:disponivel", account);
+// 	incContadorTransacoesVellus;
+// 	.wait(account(Vaga1Id));
 
-	.velluscinum.deployNFT(Server, PrK, PuK, "name:Vaga2;tipo:Longa", "status:disponivel", account);
-	incContadorTransacoesVellus;
-	.wait(account(Vaga2Id));
+// 	.velluscinum.deployNFT(Server, PrK, PuK, "name:Vaga2;tipo:Longa", "status:disponivel", account);
+// 	incContadorTransacoesVellus;
+// 	.wait(account(Vaga2Id));
 
-	.velluscinum.deployNFT(Server, PrK, PuK, "name:Vaga3;tipo:Longa", "status:disponivel", account);
-	incContadorTransacoesVellus;
-	.wait(account(Vaga3Id));
+// 	.velluscinum.deployNFT(Server, PrK, PuK, "name:Vaga3;tipo:Longa", "status:disponivel", account);
+// 	incContadorTransacoesVellus;
+// 	.wait(account(Vaga3Id));
 
-	.velluscinum.deployNFT(Server, PrK, PuK, "name:Vaga4;tipo:CurtaCoberta", "status:disponivel", account);
-	incContadorTransacoesVellus;
-	.wait(account(Vaga4Id));
+// 	.velluscinum.deployNFT(Server, PrK, PuK, "name:Vaga4;tipo:CurtaCoberta", "status:disponivel", account);
+// 	incContadorTransacoesVellus;
+// 	.wait(account(Vaga4Id));
 
-	.velluscinum.deployNFT(Server, PrK, PuK, "name:Vaga5;tipo:LongaCoberta", "status:disponivel", account);
-	incContadorTransacoesVellus;
-	.wait(account(Vaga5Id));
+// 	.velluscinum.deployNFT(Server, PrK, PuK, "name:Vaga5;tipo:LongaCoberta", "status:disponivel", account);
+// 	incContadorTransacoesVellus;
+// 	.wait(account(Vaga5Id));
 
-	Lista = [Vaga1Id, Vaga2Id, Vaga3Id, Vaga4Id, Vaga5Id];
-	-+listaVagas(Lista).
+// 	Lista = [Vaga1Id, Vaga2Id, Vaga3Id, Vaga4Id, Vaga5Id];
+// 	-+listaVagas(Lista).
 
--!listarVagas <- .print("Nao foi possivel listar as vagas").
+// -!listarVagas <- .print("Nao foi possivel listar as vagas").
 
 +!findToken(Term,set([Head|Tail])) <- 
     !compare(Term,Head,set(Tail));
@@ -446,9 +434,8 @@ mensagensEnviadas(0).
 -!compare(Term,[Type,AssetId,Qtd],set(V)).
 
 -!findToken(Type,set([   ])): not vaga(Vaga) <- 
-	.print("Lista de vagas nao encontrada");
-	!listarVagas.
+	.print("Lista de vagas nao encontrada").
+	// !listarVagas.
 
 -!findToken(Type,set([   ])): vaga(Vaga) <- 
 	.print("Vagas ja cadastradas").
-
